@@ -12,23 +12,93 @@ katzenqt member can be in one group.
 - The screen is drawn with [Tessera](https://github.com/katzenpost/Tessera), and posse logs with
   [Logger](https://github.com/katzenpost/Logger).
 
+## Building
+
+posse is Lean, with two small Rust libraries underneath it: the terminal (crossterm, through
+Tessera) and the daemon's unix socket. Building needs:
+
+- **Lean**, through [elan](https://github.com/leanprover/elan). It installs the toolchain in
+  `lean-toolchain` by itself.
+- **Rust**, through [rustup](https://rustup.rs): `cargo` must be on the `PATH` while building.
+- **git**, and about 8 GB of disk: CryptWalker depends on Mathlib, whose compiled files
+  `lake exe cache get` downloads rather than building them for hours.
+
+Then:
+
+    git clone https://github.com/katzenpost/posse
+    cd posse
+    lake exe cache get
+    lake build posse
+
+The program is `.lake/build/bin/posse`. The first build takes a while; later ones take seconds.
+
 ## Running
 
-Start `kpclientd`, then:
+posse talks to the mixnet through the Katzenpost client daemon, `kpclientd`, which does the
+networking and the cryptography. Build it from [katzenpost](https://github.com/katzenpost/katzenpost)
+with Go:
 
-    lake exe cache get && lake build posse
+    git clone https://github.com/katzenpost/katzenpost
+    cd katzenpost/cmd/kpclientd && go build
+
+and run it with the client configuration of the mixnet you want, for example:
+
+    ./kpclientd -c client.toml
+
+Its `[Listen]` section says where posse finds it; `[Listen.Unix] Address = "@katzenpost"` is the
+address posse uses by default. Several posse instances, and katzenqt, can share one daemon.
+
+Then start posse:
+
     .lake/build/bin/posse --name alice
 
 | Option | |
 |---|---|
 | `--daemon ADDR` | the daemon's socket: `@katzenpost` (the default), a path, or `HOST:PORT` |
 | `--state DIR` | where posse keeps its state and log; by default `$XDG_DATA_HOME/posse/${POSSE_STATE:-default}` |
-| `--name NAME` | your display name |
+| `--name NAME` | your display name, which others see; remembered after the first run |
 | `--log FILE` | the log file, by default `posse.log` in the state directory |
 | `--sim` | an in-memory network instead of the daemon, to try posse alone |
 
 `POSSE_LOG` sets the log level: `critical`, `error`, `warning`, `notice`, `info` (the default) or
 `debug`.
+
+### Trying it alone
+
+    .lake/build/bin/posse --sim --name alice --state /tmp/posse-try
+
+needs no daemon: type `/new test`, then a message. Nothing leaves your machine.
+
+### Starting a group and adding someone
+
+There are no accounts or servers: a group is its members' streams, and you join one by handing a
+member a contact voucher, out of band (another messenger, a QR code, in person).
+
+1. The founder types `/new friends`.
+2. The person joining types `/join friends`. posse mints a voucher and shows its code in the
+   conversation, and writes it to `voucher-friends.txt` in the state directory, so that it can be
+   copied whole; they send that code to the founder.
+3. The founder selects `friends` (Tab moves between groups) and types `/invite CODE`, pasting the
+   code. Whoever holds the code can read everything said in the group from then on, so take it
+   only from the person you mean to add.
+4. A little later the founder sees `-- added ~sam` and the newcomer `-- joined the group`. Each
+   step crosses the mixnet a few times, so this takes a few minutes.
+
+Then just type. Any member can add more people the same way, and everyone hears of them: `-- ~sam
+added ~kim`.
+
+### Two instances on one machine
+
+Give each its own state directory, and they can share one daemon:
+
+    .lake/build/bin/posse --name alice --state ~/posse-alice
+    .lake/build/bin/posse --name bob --state ~/posse-bob
+
+### With katzenqt
+
+posse speaks katzenqt's group chat, as of katzenqt's `acks-idx64` branch: a posse member can join
+a katzenqt group and the other way round, with the same voucher codes.
+`scripts/interop-katzenqt.sh` runs both directions with `katzenqt-headless`.
 
 ## Using it
 

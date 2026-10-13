@@ -103,6 +103,10 @@ def notice (c : Chat) (text : String) : Chat := (c.say fun id => { id, text }).2
 
 end Chat
 
+/-- The file beside the state that holds the voucher code minted to join `group`. -/
+def voucherFile (group : String) : String :=
+  s!"voucher-{String.ofList (group.toList.map fun ch => if ch.isAlphanum then ch else '_')}.txt"
+
 def State.chat? (s : State) (name : String) : Option Chat := s.chats.find? (·.name == name)
 
 def State.setChat (s : State) (c : Chat) : State :=

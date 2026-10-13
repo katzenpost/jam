@@ -102,6 +102,19 @@ def save (sh : Shell) (s : State) : IO Unit := do
   h.flush
   IO.FS.rename tmp sh.statePath
 
+/-- Write each voucher code we mint to `voucher-GROUP.txt` beside the state, readable by the user
+alone, so that it can be copied whole however narrow the screen. -/
+def writeVouchers (sh : Shell) (s : State) : IO Unit := do
+  let some dir := sh.statePath.parent | return
+  for c in s.chats do
+    let some (.awaiting code ..) := c.joining | continue
+    let path := dir / voucherFile c.name
+    if ← path.pathExists then continue
+    let h ← IO.FS.Handle.mk path .write
+    IO.setAccessRights path private_
+    h.putStrLn code
+    (sh.log.withModule "posse/store").notice s!"{c.name}: the voucher code is in {path}"
+
 /-- Take messages until posse stops. -/
 partial def drive (sh : Shell) : IO Unit := do
   let log := sh.log.withModule "posse/driver"
@@ -111,7 +124,9 @@ partial def drive (sh : Shell) : IO Unit := do
   if let .failed _ what := m then log.warning what
   let (c, actions) := step (← sh.core.get) m
   sh.core.set c
-  try sh.save c.state
+  try
+    sh.save c.state
+    sh.writeVouchers c.state
   catch e => (sh.log.withModule "posse/store").error s!"saving: {e}"
   sh.display c.state
   for a in actions do launch sh a

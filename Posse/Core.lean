@@ -331,7 +331,7 @@ def handle : Msg → CoreM Unit
     let code := Base64.encode m.voucher
     emit (.awaitReply name m.secretKey m.readCap box1 c.writeCap)
     return { c with joining := some (.awaiting code m.secretKey m.readCap box1) }.notice
-      s!"give this voucher code to a member of the group, and wait: {code}"
+      s!"give this voucher code to a member of the group, and wait (it is also in {voucherFile name} in the state directory): {code}"
   | .opened name o => withChat name fun c => do
     let joined : Option (ReplyWho.ReplyWho × Group) := do
       let who ← ReplyWho.decode o.whoReply
