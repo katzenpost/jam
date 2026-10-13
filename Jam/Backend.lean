@@ -8,7 +8,7 @@ import CryptWalker.GroupChat.Member.Wire
 /-! # What jam asks of the network
 
 Everything jam does on the network goes through a `Backend`: the client daemon over the thin
-client, or `Sim`, an in-memory Pigeonhole for tests. Caps and indexes are opaque bytes: a write
+client, or the in-memory Pigeonhole of the tests (`Jam.Tests.Sim`). Caps and indexes are opaque bytes: a write
 cap is 168 bytes, a read cap 136 (the write cap's last 136), an index 104. -/
 
 namespace Jam

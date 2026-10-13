@@ -1,6 +1,5 @@
 import Jam.Base64
 import Jam.Backend
-import Jam.Sim
 import Jam.State
 import Jam.Core
 import Jam.Exec

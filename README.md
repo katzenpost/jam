@@ -66,34 +66,41 @@ Then start jam:
 | `--state DIR` | where jam keeps its state and log; by default `$XDG_DATA_HOME/jam/${JAM_STATE:-default}` |
 | `--name NAME` | your display name, which others see; remembered after the first run |
 | `--log FILE` | the log file, by default `jam.log` in the state directory |
-| `--sim` | an in-memory network instead of the daemon, to try jam alone |
 
 `JAM_LOG` sets the log level: `critical`, `error`, `warning`, `notice`, `info` (the default) or
 `debug`.
 
-### Trying it alone
+### How groups work
 
-    .lake/build/bin/jam --sim --name alice --state /tmp/jam-try
+There are no accounts and no servers. A group is its members: each writes to a stream of their
+own on the mixnet and reads everyone else's. Two commands start you off, and they are for
+different people:
 
-needs no daemon: type `/new test`, then a message. Nothing leaves your machine.
+- `/new NAME` starts a group of your own, with you its only member.
+- `/join NAME` is what someone *else* types to join an existing group. NAME is only what that
+  group will be called on their screen; it need not match what the founder called it. jam shows
+  them a voucher code.
+- `/invite CODE` is what a member of the group then types, with that code, to let them in.
+
+So you never `/join` your own group: you `/new` it, and the people you want `/join` it.
 
 ### Starting a group and adding someone
 
-There are no accounts or servers: a group is its members' streams, and you join one by handing a
-member a contact voucher, out of band (another messenger, a QR code, in person).
+Say Alice starts a group and adds Sam. They hand the voucher code to each other out of band:
+another messenger, a QR code, in person.
 
-1. The founder types `/new friends`.
-2. The person joining types `/join friends`. jam mints a voucher and shows its code in the
-   conversation, and writes it to `voucher-friends.txt` in the state directory, so that it can be
-   copied whole; they send that code to the founder.
-3. The founder selects `friends` (Tab moves between groups) and types `/invite CODE`, pasting the
-   code. Whoever holds the code can read everything said in the group from then on, so take it
-   only from the person you mean to add.
-4. A little later the founder sees `-- added ~sam` and the newcomer `-- joined the group`. Each
-   step crosses the mixnet a few times, so this takes a few minutes.
+1. Alice types `/new friends`.
+2. Sam types `/join friends`. jam mints a voucher and shows its code in the conversation, and
+   writes it to `voucher-friends.txt` in Sam's state directory, so that it can be copied whole.
+   Sam sends Alice the code.
+3. Alice selects `friends` (Tab moves between groups) and types `/invite CODE`, pasting the code.
+   Whoever holds a code can read everything said in the group from then on, so Alice takes it
+   only from the person she means to add.
+4. A little later Alice sees `-- added ~sam` and Sam `-- joined the group`. Each step crosses the
+   mixnet a few times, so this takes a few minutes.
 
-Then just type. Any member can add more people the same way, and everyone hears of them: `-- ~sam
-added ~kim`.
+Then they just type. Any member can add more people the same way, and everyone hears of them:
+`-- ~sam added ~kim`.
 
 ### Two instances on one machine
 
@@ -117,9 +124,9 @@ The line you type into names the group it goes to.
 
 | Command | |
 |---|---|
-| `/new NAME` | found a group |
-| `/join NAME` | join a group: jam mints a contact voucher and shows its code, to give to a member |
-| `/invite CODE` | add the member whose voucher code you were given to the selected group |
+| `/new NAME` | start a group of your own |
+| `/join NAME` | join someone else's group, calling it NAME here: jam shows a voucher code to give to one of its members |
+| `/invite CODE` | let the person whose voucher code you were given into the selected group |
 | `/remove WHO` | stop reading a member, named by display name or by the start of their key, and delete what they sent; they can still read the group, since every member holds every member's read cap |
 | `/leave GROUP` | stop reading and writing the selected group and delete it here; the others keep it |
 | `/clear` | delete the selected conversation's lines here |

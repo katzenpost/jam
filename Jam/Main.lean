@@ -6,7 +6,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 import Jam.Daemon
 import Jam.LogPane
 import Jam.Shell
-import Jam.Sim
 import Jam.Ui
 import Jam.Display
 
@@ -23,11 +22,9 @@ structure Config where
   stateDir : Option System.FilePath := none
   logFile : Option System.FilePath := none
   name : Option String := none
-  /-- An in-memory network instead of the daemon, to try jam alone. -/
-  sim : Bool := false
 
 def usage : String :=
-  "usage: jam [--daemon @katzenpost | PATH | HOST:PORT] [--state DIR] [--name NAME] [--log FILE] [--sim]
+  "usage: jam [--daemon @katzenpost | PATH | HOST:PORT] [--state DIR] [--name NAME] [--log FILE]
 The log level is JAM_LOG: critical, error, warning, notice, info (the default) or debug."
 
 def parseArgs : Config → List String → Except String Config
@@ -36,7 +33,6 @@ def parseArgs : Config → List String → Except String Config
   | c, "--state" :: d :: rest => parseArgs { c with stateDir := some d } rest
   | c, "--log" :: f :: rest => parseArgs { c with logFile := some f } rest
   | c, "--name" :: n :: rest => parseArgs { c with name := some n } rest
-  | c, "--sim" :: rest => parseArgs { c with sim := true } rest
   | _, a :: _ => throw s!"unknown argument: {a}"
 
 def defaultStateDir : IO System.FilePath := do
@@ -120,19 +116,16 @@ where
     IO.eprintln s!"{statePath} cannot be read"; return 1
   let me := cfg.name.getD ((saved.map (·.me)).getD ((← IO.getEnv "USER").getD "me"))
   let state := { (saved.getD { me }) with me }
-  let (backend, client) ← if cfg.sim then
-      pure (Sim.backend (← IO.mkRef {}), none)
-    else
-      IO.println s!"connecting to the client daemon at {cfg.daemon}"
-      let c ← connect cfg.daemon
-      pure (Daemon.backend c, some c)
-  log.notice s!"started as {me}, state in {dir}{if cfg.sim then ", simulated network" else ""}"
+  IO.println s!"connecting to the client daemon at {cfg.daemon}"
+  let client ← connect cfg.daemon
+  let backend := Daemon.backend client
+  log.notice s!"started as {me}, state in {dir}"
   let (core, resumed) := resume state (← backend.maxPlaintext)
   let stop ← IO.mkRef false
   let inbox ← Std.CloseableChannel.new (α := Msg)
   onSignals log
   try
-    let network := if cfg.sim then "simulated network" else s!"daemon {cfg.daemon}"
+    let network := s!"daemon {cfg.daemon}"
     discard <| Tessera.App.run { draw := Ui.draw, update := Ui.update fun m => discard (inbox.send m) }
       (Ui.markSeen { state := core.state, network, logs := ← logLines.get }) fun post => do
         showLogs.set (post ∘ .logs)
@@ -143,8 +136,7 @@ where
     showLogs.set fun _ => pure ()
     stop.set true
     discard <| inbox.close
-    if let some c := client then
-      discard <| (c.close false).block
+    discard <| (client.close false).block
   log.notice "stopped"
   -- Tasks still blocked in daemon calls would keep the process alive.
   IO.Process.exit 0

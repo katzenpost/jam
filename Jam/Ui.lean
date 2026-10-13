@@ -179,7 +179,11 @@ def draw (u : Ui) : Widget :=
     | some c => (ofApp " " ++ name c.name ++ ofApp " ",
                  fun w => c.log.flatMap (rows u c · w), members u c)
     | none => (ofApp " jam ",
-               fun w => (["No groups yet.", "", help].flatMap (wrap w)).map ({}, ·), [])
+               fun w => ([
+                 "No groups yet.", "",
+                 "/new NAME starts a group of your own.",
+                 "To join someone else's group, type /join NAME and give the voucher code jam shows to one of its members, who types /invite CODE.",
+                 "", help].flatMap (wrap w)).map ({}, ·), [])
   let target := match current u with
     | some c => ofApp " [" ++ name c.name ++ ofApp "] > "
     | none => ofApp " > "
@@ -199,6 +203,7 @@ def draw (u : Ui) : Widget :=
 to quit. -/
 def command (u : Ui) (line : String) : Option Msg × Option String × String × Bool :=
   let words := (line.trimAscii.toString.splitOn " ").filter (· ≠ "")
+  let taken (name : String) := u.state.chats.any (·.name == name)
   let rest := " ".intercalate (words.drop 1)
   let chat := (current u).map (·.name)
   let message : Option Msg × Option String × String × Bool := match chat with
@@ -208,9 +213,16 @@ def command (u : Ui) (line : String) : Option Msg × Option String × String × 
   match words.head? with
   | some "/quit" => (none, none, "", true)
   | some "/new" =>
-    if rest.isEmpty then (none, none, "/new NAME", false) else (some (.create rest), some rest, "", false)
+    if rest.isEmpty then (none, none, "/new NAME starts a group of your own", false)
+    else if taken rest then (none, some rest, s!"you already have a group called {rest}", false)
+    else (some (.create rest), some rest, "", false)
   | some "/join" =>
-    if rest.isEmpty then (none, none, "/join NAME", false) else (some (.join rest), some rest, "", false)
+    if rest.isEmpty then
+      (none, none, "/join NAME joins someone else's group: NAME is what you will call it here", false)
+    else if taken rest then
+      (none, some rest, s!"you already have a group called {rest}: /join is for someone else's group, under a name of its own", false)
+    else (some (.join rest), some rest,
+      "a voucher code will appear: give it to a member of the group, who types /invite CODE", false)
   | some "/invite" =>
     match chat with
     | some c =>

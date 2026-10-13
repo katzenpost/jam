@@ -179,6 +179,19 @@ def backfill : TestM Unit := do
   check "a new epoch rewrites boxes" ok.1
   check "every rewrite is accepted" ok.2
 
+def nameTaken : TestM Unit := do
+  let (world, net) ← newNet 1 ["alice"]
+  let (ok, _) ← (do
+    feed 0 (.create "fu")
+    discard <| runUntil world fun n => joined n 0 "fu"
+    feed 0 (.join "fu")
+    feed 0 (.create "fu")
+    let n ← get
+    return n.cores[0]!.state.chats.length == 1 &&
+      noticed n 0 "fu" "you already have a group called fu: to join" &&
+      (chatOf n 0 "fu").any fun (c : Chat) => c.joining.isNone).run net
+  check "the core refuses a name already used, and says why" ok
+
 def persistState : TestM Unit := do
   let s : State := { me := "alice", chats := [{ name := "g", log := [{ id := 0, text := "x" }] }] }
   let back : Option State := load (save s)
@@ -220,6 +233,12 @@ def ui : TestM Unit := do
   check "the new group is selected once it appears" (u4.selected == 1)
   let (_, quit) ← Ui.update send (.input (.key .esc {})) u4
   check "escape quits" quit
+  let before := (← sent.get).size
+  let taken ← typeLine send u4 "/join h"
+  check "/join under a name already used is refused, and says why"
+    ((← sent.get).size == before && taken.note.startsWith "you already have a group called h")
+  let taken ← typeLine send u4 "/new g"
+  check "so is /new" ((← sent.get).size == before && taken.note.startsWith "you already have a group called g")
   let u6 ← typeLine send u4 "/leave"
   check "/leave asks for the group's name" (u6.note.startsWith "to leave h")
   discard <| typeLine send u6 "/leave h"
@@ -235,6 +254,7 @@ def main : IO UInt32 := do
     ui
     base64
     persistState
+    nameTaken
     twoMembers
     threeMembers
     removeAndLeave
