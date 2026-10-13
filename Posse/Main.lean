@@ -105,4 +105,5 @@ def main (args : List String) : IO UInt32 := do
     if let some c := client then
       discard <| (c.close false).block
   log.notice "stopped"
-  return 0
+  -- Tasks still blocked in daemon calls would keep the process alive.
+  IO.Process.exit 0

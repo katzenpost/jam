@@ -54,4 +54,5 @@ def main (args : List String) : IO UInt32 := do
     : IO Bool)
   stop.set true
   stdout.putStrLn (if ok then "OK" else "FAIL"); stdout.flush
-  return if ok then 0 else 1
+  -- Tasks still blocked in daemon calls would keep the process alive.
+  IO.Process.exit (if ok then 0 else 1)

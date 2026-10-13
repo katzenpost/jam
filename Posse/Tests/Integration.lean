@@ -46,4 +46,5 @@ def main (args : List String) : IO UInt32 := do
       (s.chat? "g").any fun c => c.log.any fun l => l.text == "hello from alice" && acknowledged c l
     : IO Bool)
   stop.set true
-  return if ok then 0 else 1
+  -- Tasks still blocked in daemon calls would keep the process alive.
+  IO.Process.exit (if ok then 0 else 1)
