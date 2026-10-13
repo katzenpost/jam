@@ -40,7 +40,7 @@ structure Ui where
   deriving Inhabited
 
 def help : String :=
-  "/new NAME · /join NAME · /invite CODE · /scan · /quit · Tab next group · PgUp PgDn scroll · F2 log"
+  "/new NAME · /join NAME · /invite CODE · /remove WHO · /leave GROUP · /scan · /quit · Tab next group · F2 log"
 
 def logRows : Nat := 6
 
@@ -144,6 +144,18 @@ def command (u : Ui) (line : String) : Option Msg × Option String × String × 
     | some c => if rest.isEmpty then (none, none, "/invite CODE", false) else (some (.induct c rest), none, "", false)
     | none => (none, none, "select a group first", false)
   | some "/scan" => (chat.map .scan, none, "", false)
+  | some "/leave" =>
+    match chat with
+    | some c =>
+      if rest == c then (some (.leave c), none, s!"left {c}", false)
+      else (none, none, s!"to leave {c} and delete it here, type /leave {c}", false)
+    | none => (none, none, "select a group first", false)
+  | some "/remove" =>
+    match chat with
+    | some c =>
+      if rest.isEmpty then (none, none, "/remove NAME, or the start of their key", false)
+      else (some (.remove c rest), none, "", false)
+    | none => (none, none, "select a group first", false)
   | some "/help" => (none, none, help, false)
   | some w =>
     if w.startsWith "/" then (none, none, s!"no such command: {w}", false)

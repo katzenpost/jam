@@ -33,6 +33,8 @@ def Msg.describe : Msg → String
   | .induct chat _ => s!"{chat}: add a member"
   | .send chat text => s!"{chat}: send {text.length} characters"
   | .scan chat => s!"{chat}: scan"
+  | .leave chat => s!"{chat}: leave"
+  | .remove chat who => s!"{chat}: remove {who}"
   | .created chat joining _ => s!"{chat}: created a stream{if joining then " to join with" else ""}"
   | .wrote chat job index _ => s!"{chat}: wrote job {job} at box {counter index}"
   | .read chat stream index o =>

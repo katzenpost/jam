@@ -42,6 +42,8 @@ The line you type into names the group it goes to.
 | `/new NAME` | found a group |
 | `/join NAME` | join a group: posse mints a contact voucher and shows its code, to give to a member |
 | `/invite CODE` | add the member whose voucher code you were given to the selected group |
+| `/remove WHO` | stop reading a member, named by display name or by the start of their key, and delete what they sent; they can still read the group, since every member holds every member's read cap |
+| `/leave GROUP` | stop reading and writing the selected group and delete it here; the others keep it |
 | `/scan` | look again for messages a member's stream skipped |
 | `/quit`, Esc | quit |
 

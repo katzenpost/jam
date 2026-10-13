@@ -88,6 +88,41 @@ def threeMembers : TestM Unit := do
   check "carol joins through bob, and alice hears of it" ok.1
   check "all three read each other" ok.2
 
+def removeAndLeave : TestM Unit := do
+  let (world, net) ← newNet 3 ["alice", "bob", "carol"]
+  let (ok, _) ← (do
+    unless ← foundAndJoin world do return (false, false, false, false, false)
+    feed 2 (.join "g")
+    unless ← runUntil world fun n => (code? n 2 "g").isSome do return (false, false, false, false, false)
+    let some code := code? (← get) 2 "g" | return (false, false, false, false, false)
+    feed 0 (.induct "g" code)
+    unless ← runUntil world fun n => joined n 2 "g" && says n 1 "g" "alice added carol" do
+      return (false, false, false, false, false)
+    feed 2 (.send "g" "carol before")
+    discard <| runUntil world fun n => says n 0 "g" "carol before" && says n 1 "g" "carol before"
+    -- Alice stops reading Carol; Bob does not.
+    feed 0 (.remove "g" "carol")
+    let n ← get
+    let gone := (chatOf n 0 "g").any fun (c : Chat) =>
+      c.group.any (fun (g : Group) => g.readers.size == 1) && !c.log.any (·.text == "carol before")
+    feed 2 (.send "g" "carol after")
+    feed 1 (.send "g" "bob after")
+    let bobHears ← runUntil world fun n => says n 1 "g" "carol after" && says n 0 "g" "bob after"
+    let aliceDoesNot := !says (← get) 0 "g" "carol after"
+    let unknown := (feed 0 (.remove "g" "dave") *> get : NetM Net)
+    let n ← unknown
+    let refused := says n 0 "g" "no member is called dave"
+    -- Bob leaves; what was under way for the group comes to nothing.
+    feed 1 (.leave "g")
+    discard <| runUntil world (fun _ => false) 60000
+    let left := (chatOf (← get) 1 "g").isNone
+    return (gone, bobHears && aliceDoesNot, refused, left, true)).run net
+  let (gone, others, refused, left, _) := ok
+  check "remove stops reading a member and deletes what they sent" gone
+  check "the others still read the removed member, who still reads them" others
+  check "remove names no one it cannot find" refused
+  check "leave deletes the group" left
+
 def restart : TestM Unit := do
   let (world, net) ← newNet 2 ["alice", "bob"]
   let (ok, net) ← (do
@@ -187,6 +222,14 @@ def ui : TestM Unit := do
   check "the new group is selected once it appears" (u4.selected == 1)
   let (_, quit) ← Ui.update send (.input (.key .esc {})) u4
   check "escape quits" quit
+  let (u6, _) ← Ui.update send (.input (.paste "/leave")) u4
+  let (u6, _) ← Ui.update send (.input (.key .enter {})) u6
+  check "/leave asks for the group's name" (u6.note.startsWith "to leave h")
+  let (u6, _) ← Ui.update send (.input (.paste "/leave h")) u6
+  let (_, _) ← Ui.update send (.input (.key .enter {})) u6
+  check "/leave with the group's name leaves" (match (← sent.get).toList.getLast? with
+    | some (.leave "h") => true
+    | _ => false)
   let (u5, _) ← Ui.update send (.input (.paste "/bogus")) u4
   let (u5, _) ← Ui.update send (.input (.key .enter {})) u5
   check "an unknown command says so" (u5.note.startsWith "no such command")
@@ -198,6 +241,7 @@ def main : IO UInt32 := do
     persistState
     twoMembers
     threeMembers
+    removeAndLeave
     restart
     failingWrites
     tooLong

@@ -56,6 +56,10 @@ inductive Msg
   | induct (chat : String) (code : String)
   | send (chat : String) (text : String)
   | scan (chat : String)
+  /-- Forget a group: stop reading and writing it, and delete it. -/
+  | leave (chat : String)
+  /-- Stop reading a member, named by display name or by the start of its key in hex. -/
+  | remove (chat : String) (who : String)
   | created (chat : String) (joining : Bool) (kp : Keypair)
   | wrote (chat : String) (job : Nat) (index next : Index)
   | read (chat : String) (stream : Key) (index : Index) (outcome : ReadOutcome)
@@ -277,6 +281,21 @@ def sanitize (name : String) : String :=
   let s := String.ofList (name.toList.filter fun ch => !(ch.toNat < 0x20 || (0x7f ≤ ch.toNat && ch.toNat ≤ 0x9f)))
   if s.isEmpty then "unnamed" else s
 
+def hexOf (b : ByteArray) : String :=
+  String.join (b.data.toList.map fun x =>
+    let s := String.ofList (Nat.toDigits 16 x.toNat)
+    if s.length < 2 then "0" ++ s else s)
+
+/-- The members of `c` that `who` names: by display name, or by the start of the key in hex. -/
+def named (c : Chat) (who : String) : List Key :=
+  match c.group with
+  | none => []
+  | some g =>
+    let byName := g.readers.keys.filter fun k => c.names.get? k == some who
+    if byName.isEmpty && who.length ≥ 4 then
+      g.readers.keys.filter fun k => (hexOf k).startsWith who.toLower
+    else byName
+
 def readResult : ReadOutcome → ReadResult × Option Index
   | .data p next => (.data (messageOf p), some next)
   | .notFound => (.missing .notFound, none)
@@ -384,6 +403,24 @@ def handle : Msg → CoreM Unit
       let (es, c') := onGroup c (Group.handle (.scan stream)) []
       c ← effects c' es
     return c.notice "scanning for missed messages"
+  | .leave name => do
+    modify fun (core, as) =>
+      ({ core with state := { core.state with chats := core.state.chats.filter (·.name != name) } }, as)
+    modifyFlight fun f => { writing := f.writing.erase name,
+                            reading := f.reading.filter (·.1 != name),
+                            misses := f.misses.filter (·.1.1 != name) }
+  | .remove name who => withChat name fun c => do
+    match named c who with
+    | [k] =>
+      let label := (c.names.get? k).getD who
+      let c := (onGroup c (Group.remove k) ()).2
+      stopReading name k
+      hit name k
+      return { c with cursors := c.cursors.erase k,
+                      log := c.log.filter (·.sender != k) }.notice
+        s!"stopped reading {label} and deleted what they sent; they can still read this group"
+    | [] => return c.notice s!"no member is called {who}"
+    | _ => return c.notice s!"more than one member is called {who}: name them by the start of their key"
   | .scanRead name stream index outcome => withChat name fun c => do
     let (result, next) := readResult outcome
     let (es, c) := onGroup c (Group.handle (.boxRead stream index result next)) []
