@@ -125,7 +125,7 @@ A member's message too long for one box is not shown yet, nor are files.
 
 ## Security
 
-posse follows [docs/TUI_SECURITY_GUIDELINES.md](docs/TUI_SECURITY_GUIDELINES.md): everything
+posse follows Tessera's [TUI security guidelines](https://github.com/katzenpost/Tessera/blob/main/docs/TUI_SECURITY_GUIDELINES.md): everything
 another member sends is untrusted, and the terminal is an interpreter.
 
 - **One filter.** Every string reaches the screen as `Shown`, Tessera's `Untrusted.Safe`, made by
