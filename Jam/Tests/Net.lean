@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import Jam.Exec
-import Jam.Sim
+import Jam.Tests.Sim
 
 /-! # Members on a simulated network
 

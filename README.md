@@ -66,7 +66,6 @@ Then start jam:
 | `--state DIR` | where jam keeps its state and log; by default `$XDG_DATA_HOME/jam/${JAM_STATE:-default}` |
 | `--name NAME` | your display name, which others see; remembered after the first run |
 | `--log FILE` | the log file, by default `jam.log` in the state directory |
-| `--sim` | an in-memory network instead of the daemon, to try jam alone |
 
 `JAM_LOG` sets the log level: `critical`, `error`, `warning`, `notice`, `info` (the default) or
 `debug`.
@@ -84,16 +83,6 @@ different people:
 - `/invite CODE` is what a member of the group then types, with that code, to let them in.
 
 So you never `/join` your own group: you `/new` it, and the people you want `/join` it.
-
-### Trying it alone
-
-    .lake/build/bin/jam --sim --name alice --state /tmp/jam-try
-
-`--sim` replaces the mixnet with a pretend one inside this one jam process: no daemon is needed
-and nothing leaves your machine, but nobody else is on it, and it is gone when jam exits. It is
-for seeing the screen and the commands: `/new test` starts a group, and what you type then is
-written to it and shown as sent. You cannot add anyone in `--sim`; `/join` shows a voucher code
-that no one can answer. To try a group of two, run two jam instances on a real daemon, as below.
 
 ### Starting a group and adding someone
 
