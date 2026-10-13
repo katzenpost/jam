@@ -1,0 +1,46 @@
+name = "posse"
+defaultTargets = ["posse"]
+
+[leanOptions]
+autoImplicit = false
+relaxedAutoImplicit = false
+
+[[require]]
+name = "Tessera"
+git = "https://github.com/katzenpost/Tessera.git"
+rev = "0756de14afba813dc89ec2612bd7e37e69b6bc82"
+
+[[require]]
+name = "Logger"
+git = "https://github.com/katzenpost/Logger.git"
+rev = "61f4fc02ffa00401d59d98f25feda499f26b10e2"
+
+[[require]]
+name = "thinclient"
+git = "https://github.com/katzenpost/thin_client.git"
+rev = "5e96c63e95a99db2e9a74e44c09cb8a0b31c5619"
+
+# Declared last so that it is the CryptWalker Lake resolves, ahead of thin_client's older pin.
+[[require]]
+name = "CryptWalker"
+git = "https://github.com/katzenpost/CryptWalker.git"
+rev = "6e83bc855e46b6b6a6ec2f8916ce48039f51191a"
+
+[[lean_lib]]
+name = "Posse"
+
+[[lean_exe]]
+name = "posse"
+root = "Posse.Main"
+
+[[lean_exe]]
+name = "posse-test"
+root = "Posse.Tests.Main"
+
+[[lean_exe]]
+name = "posse-integration"
+root = "Posse.Tests.Integration"
+
+[[lean_exe]]
+name = "posse-interop"
+root = "Posse.Tests.Interop"
