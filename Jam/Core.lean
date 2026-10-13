@@ -313,11 +313,15 @@ def readResult : ReadOutcome → ReadResult × Option Index
 
 def handle : Msg → CoreM Unit
   | .create name => do
-    if (← getChat name).isSome then return
+    if let some c ← getChat name then
+      setChat (c.notice s!"you already have a group called {name}")
+      return
     setChat { name }
     emit (.create name false)
   | .join name => do
-    if (← getChat name).isSome then return
+    if let some c ← getChat name then
+      setChat (c.notice s!"you already have a group called {name}: to join someone else's group, give it a name of its own")
+      return
     setChat { name, joining := some .minting }
     emit (.create name true)
   | .created name joining kp => withChat name fun c => do
