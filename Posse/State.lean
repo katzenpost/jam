@@ -90,13 +90,14 @@ namespace Chat
 
 def fresh (c : Chat) : Nat × Chat := (c.nextId, { c with nextId := c.nextId + 1 })
 
-def nameOf (c : Chat) (key : Key) : String :=
-  if c.group.any (·.me == key) then "me" else (c.names.get? key).getD "?"
+/-- Lines a conversation keeps; older ones are dropped. -/
+def maxLog : Nat := 10000
 
 /-- Add a line; its id. -/
 def say (c : Chat) (line : Nat → Line) : Nat × Chat :=
   let (id, c) := c.fresh
-  (id, { c with log := c.log ++ [line id] })
+  let log := c.log ++ [line id]
+  (id, { c with log := log.drop (log.length - min log.length maxLog) })
 
 def notice (c : Chat) (text : String) : Chat := (c.say fun id => { id, text }).2
 

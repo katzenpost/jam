@@ -70,6 +70,10 @@ def chatOf (n : Net) (who : Nat) (name : String) : Option Chat := n.cores[who]!.
 def says (n : Net) (who : Nat) (name : String) (text : String) : Bool :=
   (chatOf n who name).any fun c => c.log.any (·.text == text)
 
+/-- A notice of posse's that begins with `text`. -/
+def noticed (n : Net) (who : Nat) (name : String) (text : String) : Bool :=
+  (chatOf n who name).any fun c => c.log.any fun l => l.sender.size == 0 && l.text.startsWith text
+
 def joined (n : Net) (who : Nat) (name : String) : Bool :=
   (chatOf n who name).any (·.group.isSome)
 

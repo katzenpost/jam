@@ -8,6 +8,7 @@ import Posse.LogPane
 import Posse.Shell
 import Posse.Sim
 import Posse.Ui
+import Posse.Display
 
 /-! # posse
 
@@ -58,7 +59,43 @@ def connect (daemon : String) : IO ThinClient.Client := do
   | .ok c => pure c
   | .error e => throw (IO.userError s!"connecting to the daemon at {daemon}: {e}")
 
+/-- Put the terminal back as it was: for a signal, which ends posse without unwinding. -/
+def restoreTerminal : IO Unit := do
+  try CrosstermFfi.disableBracketedPaste catch _ => pure ()
+  try CrosstermFfi.showCursor catch _ => pure ()
+  try CrosstermFfi.leaveAlternateScreen catch _ => pure ()
+  try CrosstermFfi.disableRawMode catch _ => pure ()
+
+/-- On SIGTERM, SIGHUP or SIGQUIT, restore the terminal before exiting, so that it is not left in
+raw mode with the conversation on it. -/
+def onSignals (log : Logger) : IO Unit := do
+  for (sig, n) in [(Std.Async.Signal.sigterm, 15), (.sighup, 1), (.sigquit, 3)] do
+    let w ← Std.Async.Signal.Waiter.mk sig false
+    let t ← w.wait
+    discard <| IO.asTask (prio := .dedicated) do
+      discard <| IO.wait t
+      restoreTerminal
+      log.notice s!"stopped by signal {n}"
+      (IO.Process.exit (128 + n).toUInt8 : IO Unit)
+
+/-- Hand the UI the latest state at most every `ms` milliseconds, however often it changes. -/
+def coalesce (post : State → IO Unit) (stop : IO.Ref Bool) (ms : UInt32 := 33) :
+    IO (State → IO Unit) := do
+  let latest ← IO.mkRef (none : Option State)
+  discard <| IO.asTask (prio := .dedicated) do
+    while !(← stop.get) do
+      IO.sleep ms
+      if let some s ← latest.modifyGet (·, none) then post s
+  return fun s => latest.set (some s)
+
 def main (args : List String) : IO UInt32 := do
+  try run args
+  catch e =>
+    restoreTerminal
+    IO.eprintln (Display.text (toString e)).text
+    return 1
+where
+  run (args : List String) : IO UInt32 := do
   let cfg ← match parseArgs {} args with
     | .ok c => pure c
     | .error e => IO.eprintln s!"{e}\n{usage}"; return 2
@@ -66,7 +103,10 @@ def main (args : List String) : IO UInt32 := do
     | some d => pure d
     | none => defaultStateDir
   IO.FS.createDirAll dir
-  let logFile ← Logger.Output.open (.file (cfg.logFile.getD (dir / "posse.log")))
+  IO.setAccessRights dir { user := { read := true, write := true, execution := true } }
+  let logPath := cfg.logFile.getD (dir / "posse.log")
+  let logFile ← Logger.Output.open (.file logPath)
+  IO.setAccessRights logPath Shell.private_
   let logLines ← IO.mkRef (#[] : Array String)
   -- The pane shows the log once the UI is up; until then lines only go to the file.
   let showLogs ← IO.mkRef (fun (_ : Array String) => (pure () : IO Unit))
@@ -90,13 +130,14 @@ def main (args : List String) : IO UInt32 := do
   let (core, resumed) := resume state (← backend.maxPlaintext)
   let stop ← IO.mkRef false
   let inbox ← Std.CloseableChannel.new (α := Msg)
+  onSignals log
   try
     let network := if cfg.sim then "simulated network" else s!"daemon {cfg.daemon}"
     discard <| Tessera.App.run { draw := Ui.draw, update := Ui.update fun m => discard (inbox.send m) }
       (Ui.markSeen { state := core.state, network, logs := ← logLines.get }) fun post => do
         showLogs.set (post ∘ .logs)
-        let sh : Shell := { backend, core := ← IO.mkRef core, inbox, log, statePath,
-                            display := post ∘ .state, stop }
+        let display ← coalesce (post ∘ .state) stop
+        let sh : Shell := { backend, core := ← IO.mkRef core, inbox, log, statePath, display, stop }
         sh.start resumed
   finally
     showLogs.set fun _ => pure ()

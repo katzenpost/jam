@@ -7,6 +7,7 @@ import CryptWalker.GroupChat.Member.Gcm
 import CryptWalker.GroupChat.Member.Membership
 import CryptWalker.GroupChat.Member.ReplyWho
 import Posse.Base64
+import Posse.Display
 import Posse.State
 
 /-! # What posse does
@@ -60,6 +61,8 @@ inductive Msg
   | leave (chat : String)
   /-- Stop reading a member, named by display name or by the start of its key in hex. -/
   | remove (chat : String) (who : String)
+  /-- Delete a conversation's lines here. -/
+  | clear (chat : String)
   | created (chat : String) (joining : Bool) (kp : Keypair)
   | wrote (chat : String) (job : Nat) (index next : Index)
   | read (chat : String) (stream : Key) (index : Index) (outcome : ReadOutcome)
@@ -194,6 +197,11 @@ def messageOf (plaintext : ByteArray) : Option Message :=
   | .final cbor => Gcm.toMessage cbor
   | _ => none
 
+/-- A member as a notice names them: `me`, or the name they chose, filtered, after `~`. -/
+def label (c : Chat) (key : Key) : String :=
+  if c.group.any (·.me == key) then "me"
+  else "~" ++ (Display.name ((c.names.get? key).getD "?")).text
+
 /-- Notes for the conversation about a box: who an `Introduction` introduced, or a message posse
 cannot show. -/
 def remark (c : Chat) (stream : Key) (plaintext : ByteArray) : Chat :=
@@ -203,10 +211,10 @@ def remark (c : Chat) (stream : Key) (plaintext : ByteArray) : Chat :=
     | some i =>
       let c := { c with names := c.names.setDefault (keyOf i.readCap) i.name }
       if c.group.any (·.me == keyOf i.readCap) then c
-      else c.notice s!"{c.nameOf stream} added {i.name}"
+      else c.notice s!"{label c stream} added ~{(Display.name i.name).text}"
     | none => c
   | .indirection .. | .continued _ =>
-    c.notice s!"{c.nameOf stream} sent a long message, which posse cannot show yet"
+    c.notice s!"{label c stream} sent a long message, which posse cannot show yet"
   | .unknown => c
 
 /-! ## Under way -/
@@ -358,8 +366,9 @@ def handle : Msg → CoreM Unit
     let c ← if c.group.isSome then enqueue c [o] else pure c
     let c := (onGroup c (do if (← get).ledger.holding then Group.cancelInduction) ()).2
     let c := { c with inducting := none, names := c.names.set (keyOf i.mutatedReadCap) who }
-    return c.notice s!"added {who}"
+    return c.notice s!"added ~{(Display.name who).text}: they now read everything said in this group"
   | .send name text => withChat name fun c => do
+    let text := Display.outgoing text
     let some g := c.group | return c.notice "this conversation has not been joined yet"
     let content := Gcm.textContent (membershipHash (memberCaps g)) text
     let (id, c) := c.say fun id => { id, sender := g.me, text, status := .pending }
@@ -412,7 +421,7 @@ def handle : Msg → CoreM Unit
   | .remove name who => withChat name fun c => do
     match named c who with
     | [k] =>
-      let label := (c.names.get? k).getD who
+      let label := label c k
       let c := (onGroup c (Group.remove k) ()).2
       stopReading name k
       hit name k
@@ -421,6 +430,7 @@ def handle : Msg → CoreM Unit
         s!"stopped reading {label} and deleted what they sent; they can still read this group"
     | [] => return c.notice s!"no member is called {who}"
     | _ => return c.notice s!"more than one member is called {who}: name them by the start of their key"
+  | .clear name => withChat name fun c => return { c with log := [] }
   | .scanRead name stream index outcome => withChat name fun c => do
     let (result, next) := readResult outcome
     let (es, c) := onGroup c (Group.handle (.boxRead stream index result next)) []

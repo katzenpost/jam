@@ -34,7 +34,8 @@ def Msg.describe : Msg → String
   | .send chat text => s!"{chat}: send {text.length} characters"
   | .scan chat => s!"{chat}: scan"
   | .leave chat => s!"{chat}: leave"
-  | .remove chat who => s!"{chat}: remove {who}"
+  | .remove chat _ => s!"{chat}: remove a member"
+  | .clear chat => s!"{chat}: clear"
   | .created chat joining _ => s!"{chat}: created a stream{if joining then " to join with" else ""}"
   | .wrote chat job index _ => s!"{chat}: wrote job {job} at box {counter index}"
   | .read chat stream index o =>
@@ -51,7 +52,7 @@ def Msg.describe : Msg → String
   | .minted chat _ box1 => s!"{chat}: minted a voucher; its reply goes to box {counter box1}"
   | .opened chat _ => s!"{chat}: opened the voucher's reply"
   | .joinerPayload chat _ _ _ _ => s!"{chat}: read a voucher's box 0"
-  | .inducted chat i => s!"{chat}: sealed the reply for {i.name}"
+  | .inducted chat i => s!"{chat}: sealed the reply for {i.name.length}-character name"
   | .epoch n => s!"replica epoch {n}"
   | .failed chat what => s!"{chat}: {what}"
 
@@ -88,9 +89,17 @@ partial def launch (sh : Shell) (a : Action) : IO Unit := do
       if ← nap sh ms then launch sh a
     | .delay m ms => if ← nap sh ms then sh.post m
 
+/-- Readable and writable by the user alone. -/
+def private_ : IO.FileRight := { user := { read := true, write := true } }
+
+/-- Save the state: written to a file only the user may read, which then takes the old one's
+place. -/
 def save (sh : Shell) (s : State) : IO Unit := do
   let tmp := sh.statePath.addExtension "tmp"
-  IO.FS.writeBinFile tmp (Persist.save s)
+  let h ← IO.FS.Handle.mk tmp .write
+  IO.setAccessRights tmp private_
+  h.write (Persist.save s)
+  h.flush
   IO.FS.rename tmp sh.statePath
 
 /-- Take messages until posse stops. -/

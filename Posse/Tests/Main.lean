@@ -4,6 +4,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import Posse.Tests.Net
+import Posse.Tests.Util
+import Posse.Tests.Security
 import Posse.Ui
 
 /-! # posse's tests
@@ -15,15 +17,6 @@ namespace Posse.Tests
 
 open CryptWalker.GroupChat.Member
 open CryptWalker.GroupChat.Member.Persist
-
-abbrev TestM := StateT (Nat × Nat) IO
-
-def check (name : String) (ok : Bool) : TestM Unit := do
-  let (pass, fail) ← get
-  if ok then set (pass + 1, fail)
-  else
-    IO.println s!"FAIL {name}"
-    set (pass, fail + 1)
 
 def base64 : TestM Unit := do
   for (raw, text) in [("", ""), ("a", "YQ=="), ("ab", "YWI="), ("abc", "YWJj"),
@@ -45,7 +38,7 @@ def foundAndJoin (world : IO.Ref Sim.World) : NetM Bool := do
   unless ← runUntil world fun n => (code? n 1 "g").isSome do return false
   let some code := code? (← get) 1 "g" | return false
   feed 0 (.induct "g" code)
-  runUntil world fun n => joined n 1 "g" && says n 0 "g" "added bob"
+  runUntil world fun n => joined n 1 "g" && noticed n 0 "g" "added ~bob"
 
 def twoMembers : TestM Unit := do
   let (world, net) ← newNet 2 ["alice", "bob"]
@@ -78,7 +71,7 @@ def threeMembers : TestM Unit := do
     unless ← runUntil world fun n => (code? n 2 "g").isSome do return (false, false)
     let some code := code? (← get) 2 "g" | return (false, false)
     feed 1 (.induct "g" code)
-    unless ← runUntil world fun n => joined n 2 "g" && says n 0 "g" "bob added carol" do
+    unless ← runUntil world fun n => joined n 2 "g" && noticed n 0 "g" "~bob added ~carol" do
       return (false, false)
     feed 2 (.send "g" "carol here")
     feed 0 (.send "g" "welcome carol")
@@ -96,7 +89,7 @@ def removeAndLeave : TestM Unit := do
     unless ← runUntil world fun n => (code? n 2 "g").isSome do return (false, false, false, false, false)
     let some code := code? (← get) 2 "g" | return (false, false, false, false, false)
     feed 0 (.induct "g" code)
-    unless ← runUntil world fun n => joined n 2 "g" && says n 1 "g" "alice added carol" do
+    unless ← runUntil world fun n => joined n 2 "g" && noticed n 1 "g" "~alice added ~carol" do
       return (false, false, false, false, false)
     feed 2 (.send "g" "carol before")
     discard <| runUntil world fun n => says n 0 "g" "carol before" && says n 1 "g" "carol before"
@@ -191,6 +184,12 @@ def persistState : TestM Unit := do
   let back : Option State := load (save s)
   check "state saves and loads" (back.any fun b => b.me == "alice" && b.chats.length == 1)
 
+/-- Type `line` and press Enter. -/
+def typeLine (send : Msg → IO Unit) (u : Ui.Ui) (line : String) : IO Ui.Ui := do
+  let u ← line.toList.foldlM (fun u c => do
+    pure (← Ui.update send (.input (.key (.char c) {})) u).1) u
+  pure (← Ui.update send (.input (.key .enter {})) u).1
+
 def ui : TestM Unit := do
   let sent ← IO.mkRef (#[] : Array Msg)
   let send := fun m => sent.modify (·.push m)
@@ -213,8 +212,7 @@ def ui : TestM Unit := do
     | [.send "g" "hi there"] => true
     | _ => false)
   check "enter clears the line" (u2.input.isEmpty && !quit)
-  let (u3, _) ← Ui.update send (.input (.paste "/new h")) u2
-  let (u3, _) ← Ui.update send (.input (.key .enter {})) u3
+  let u3 ← typeLine send u2 "/new h"
   check "/new creates a group" (match (← sent.get).toList.getLast? with
     | some (.create "h") => true
     | _ => false)
@@ -222,20 +220,18 @@ def ui : TestM Unit := do
   check "the new group is selected once it appears" (u4.selected == 1)
   let (_, quit) ← Ui.update send (.input (.key .esc {})) u4
   check "escape quits" quit
-  let (u6, _) ← Ui.update send (.input (.paste "/leave")) u4
-  let (u6, _) ← Ui.update send (.input (.key .enter {})) u6
+  let u6 ← typeLine send u4 "/leave"
   check "/leave asks for the group's name" (u6.note.startsWith "to leave h")
-  let (u6, _) ← Ui.update send (.input (.paste "/leave h")) u6
-  let (_, _) ← Ui.update send (.input (.key .enter {})) u6
+  discard <| typeLine send u6 "/leave h"
   check "/leave with the group's name leaves" (match (← sent.get).toList.getLast? with
     | some (.leave "h") => true
     | _ => false)
-  let (u5, _) ← Ui.update send (.input (.paste "/bogus")) u4
-  let (u5, _) ← Ui.update send (.input (.key .enter {})) u5
+  let u5 ← typeLine send u4 "/bogus"
   check "an unknown command says so" (u5.note.startsWith "no such command")
 
 def main : IO UInt32 := do
   let ((), (pass, fail)) ← (do
+    Security.tests
     ui
     base64
     persistState
