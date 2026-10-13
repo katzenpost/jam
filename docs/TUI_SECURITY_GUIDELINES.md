@@ -1,5 +1,7 @@
 # Security Guidelines for TUI Applications
 
+*This document was written by an LLM that read the papers and references cited in the Sources section. It is not the original work of a human author.*
+
 ## Scope and threat model
 
 A TUI writes into a terminal emulator, and the emulator is an interpreter: every byte the app emits is a program it runs. In a group chat, any participant, or a compromised server or relay, controls message bodies, nicknames, room names, topics, file names, link text and status text. All of it is untrusted until it has passed one sanitizing choke point.
