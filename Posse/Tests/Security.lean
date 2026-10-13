@@ -18,6 +18,7 @@ their place. -/
 namespace Posse.Tests.Security
 
 open Posse Posse.Display Posse.Tests
+open Tessera.Untrusted (inRanges mixedScript)
 open CryptWalker.GroupChat.Member
 open Tessera
 

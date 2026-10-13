@@ -58,12 +58,14 @@ A member's message too long for one box is not shown yet, nor are files.
 posse follows [docs/TUI_SECURITY_GUIDELINES.md](docs/TUI_SECURITY_GUIDELINES.md): everything
 another member sends is untrusted, and the terminal is an interpreter.
 
-- **One filter.** Every string reaches the screen as `Display.Shown`, made only by
-  `Posse.Display`. It keeps characters by an allowlist and shows anything else: `␛` and the other
-  Control Pictures for control characters, `␦` for the rest, so an attempt is visible rather than
-  hidden. Bidi controls, invisible characters, private-use glyphs, tag characters and characters
-  whose width terminals disagree on are refused; combining accents are capped at four a letter;
-  a message shows at most 20 lines.
+- **One filter.** Every string reaches the screen as `Shown`, Tessera's `Untrusted.Safe`, made by
+  [`Tessera.Untrusted`](https://github.com/katzenpost/Tessera), which every TUI showing text from
+  elsewhere needs. It keeps characters by an allowlist of those whose width the terminal and
+  Tessera agree on, and shows anything else: `␛` and the other Control Pictures for control
+  characters, `␦` for the rest, so an attempt is visible rather than hidden. Bidi controls,
+  invisible characters, private-use glyphs and tag characters are refused; combining accents are
+  capped at four a letter; a message shows at most 20 lines. Tessera itself never writes a
+  character that takes no cell. `Posse.Display` adds posse's rules for names.
 - **posse decides who said what.** A member's chosen name is shown after `~`, ours as `me`; a name
   cannot hold check marks or other marks posse uses, and is cut at 30 characters. Names that look
   alike (case, look-alike Cyrillic and Greek letters, `0`/`o`, `1`/`l`), names like ours and names

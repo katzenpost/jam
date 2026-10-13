@@ -30,6 +30,7 @@ namespace Posse.Ui
 
 open Tessera Widget
 open Posse.Display
+open Tessera.Untrusted (skeleton mixedScript)
 open CryptWalker.GroupChat.Member
 
 inductive Event
