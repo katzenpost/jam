@@ -14,14 +14,15 @@ katzenqt member can be in one group.
 
 ## Building
 
-posse is Lean, with two small Rust libraries underneath it: the terminal (crossterm, through
-Tessera) and the daemon's unix socket. Building needs:
+posse is Lean, with two small Rust libraries underneath it: one for the terminal (crossterm,
+through Tessera) and one for the daemon's unix socket. You need:
 
-- **Lean**, through [elan](https://github.com/leanprover/elan). It installs the toolchain in
+- **Lean**, through [elan](https://github.com/leanprover/elan). It installs the toolchain named in
   `lean-toolchain` by itself.
-- **Rust**, through [rustup](https://rustup.rs): `cargo` must be on the `PATH` while building.
-- **git**, and about 8 GB of disk: CryptWalker depends on Mathlib, whose compiled files
-  `lake exe cache get` downloads rather than building them for hours.
+- **Rust**, through [rustup](https://rustup.rs). There is no separate Rust step: Lake runs `cargo`
+  itself while building, so `cargo` only has to be on the `PATH` (rustup's installer puts
+  `~/.cargo/bin` there; in a shell started before it, `source ~/.cargo/env`).
+- **git**, and about 8 GB of disk.
 
 Then:
 
@@ -30,13 +31,20 @@ Then:
     lake exe cache get
     lake build posse
 
-The program is `.lake/build/bin/posse`. The first build takes a while; later ones take seconds.
+`lake exe cache get` fetches the dependencies, and downloads Mathlib's compiled files (several
+GB, which CryptWalker needs) rather than building them for hours. `lake build posse` then
+compiles the rest, Rust included, which takes several minutes the first time and seconds after.
+The program is `.lake/build/bin/posse`. `make test` builds and runs the tests.
+
+If the build stops with `could not execute external process 'cargo'`, `cargo` is not on the
+`PATH`. A note that VCVio's `leanfalcon` native backend is disabled is expected, and harmless:
+posse does not use it.
 
 ## Running
 
 posse talks to the mixnet through the Katzenpost client daemon, `kpclientd`, which does the
 networking and the cryptography. Build it from [katzenpost](https://github.com/katzenpost/katzenpost)
-with Go:
+with Go, of at least the version its `go.mod` names:
 
     git clone https://github.com/katzenpost/katzenpost
     cd katzenpost/cmd/kpclientd && go build
