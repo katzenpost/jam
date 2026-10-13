@@ -133,8 +133,32 @@ The line you type into names the group it goes to.
 | `/scan` | look again for messages a member's stream skipped |
 | `/quit`, Esc | quit |
 
-Tab and Shift-Tab move between groups, PgUp and PgDn scroll, F2 hides the log and F10 blanks the
-screen. Your own messages are marked `...` until written, `✓` once written, and `✓✓` once a member acknowledges reading them.
+### Several groups
+
+You can be in any number of groups: each `/new` or `/join` adds one to the groups pane, and
+selects it.
+
+- **Tab** selects the next group, **Shift-Tab** the one before. The selected group is
+  highlighted; the conversation and the members pane show it.
+- What you type goes to the selected group only, and the line you type into says which:
+  `[friends] >`. So do `/invite`, `/remove`, `/leave`, `/clear` and `/scan`.
+- The other groups go on reading in the background. One with lines you have not seen shows how
+  many, `work (3)`; one you are still joining shows `joining…`, and one adding a member
+  `adding…`.
+
+### Keys
+
+| Key | |
+|---|---|
+| Tab, Shift-Tab | the next or previous group |
+| PgUp, PgDn | scroll the conversation back and forward |
+| F1 | show or hide the commands |
+| F2 | hide or show the log |
+| F10 | blank the screen at once, and bring it back |
+| Esc, Ctrl-C | quit |
+
+Your own messages are marked `...` until written, `✓` once written, and `✓✓` once a member
+acknowledges reading them.
 
 A member's message too long for one box is not shown yet, nor are files.
 
