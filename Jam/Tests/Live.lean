@@ -3,17 +3,17 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Posse.Daemon
-import Posse.Shell
+import Jam.Daemon
+import Jam.Shell
 
 /-! # Members on a real mixnet
 
-posse members run as the app runs them, through a `Shell`, each with its own connection to a
+jam members run as the app runs them, through a `Shell`, each with its own connection to a
 client daemon, for the tests that need a mixnet. -/
 
-namespace Posse.Tests.Live
+namespace Jam.Tests.Live
 
-open Posse Logger
+open Jam Logger
 
 def connect (daemon : String) : IO ThinClient.Client := do
   let dial ← if daemon.startsWith "@" || daemon.startsWith "/" then
@@ -41,7 +41,7 @@ def member (daemon : String) (me : String) (dir : System.FilePath) (log : Logger
   let (core, resumed) := resume { me } (← backend.maxPlaintext)
   let shell : Shell :=
     { backend, core := ← IO.mkRef core, inbox := ← Std.CloseableChannel.new,
-      log := log.withModule s!"posse/{me}", statePath := dir / s!"{me}.cbor",
+      log := log.withModule s!"jam/{me}", statePath := dir / s!"{me}.cbor",
       display := latest.set, stop }
   shell.start resumed
   pure { shell, latest }
@@ -65,4 +65,4 @@ def code? (s : State) : Option String := do
   | some (.awaiting code ..) => some code
   | _ => none
 
-end Posse.Tests.Live
+end Jam.Tests.Live

@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 The standard alphabet with padding, as Python's `b64encode` writes a voucher code. -/
 
-namespace Posse.Base64
+namespace Jam.Base64
 
 def alphabet : String := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
@@ -54,4 +54,4 @@ def decode (s : String) : Option ByteArray := do
     rest := rest.drop 4
   return out.extract 0 (out.size - pad)
 
-end Posse.Base64
+end Jam.Base64

@@ -5,15 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 import Logger
 import Std.Sync.Channel
-import Posse.Exec
+import Jam.Exec
 
-/-! # Running posse
+/-! # Running jam
 
 One task owns the core: it takes each message in turn, steps the core, saves the state, shows it,
 and launches the network work the step asks for, each on a task of its own that hands back what
 came of it. Another task watches the replica epoch. -/
 
-namespace Posse
+namespace Jam
 
 open CryptWalker.GroupChat.Member
 open CryptWalker.GroupChat.Member.Persist
@@ -70,7 +70,7 @@ namespace Shell
 
 def post (sh : Shell) (m : Msg) : IO Unit := discard <| sh.inbox.send m
 
-/-- Sleep `ms` milliseconds, waking early when posse stops; whether it is still running. -/
+/-- Sleep `ms` milliseconds, waking early when jam stops; whether it is still running. -/
 partial def nap (sh : Shell) (ms : Nat) : IO Bool := do
   if ← sh.stop.get then return false
   if ms = 0 then return true
@@ -79,7 +79,7 @@ partial def nap (sh : Shell) (ms : Nat) : IO Bool := do
   nap sh (ms - slice)
 
 partial def launch (sh : Shell) (a : Action) : IO Unit := do
-  let net := sh.log.withModule "posse/net"
+  let net := sh.log.withModule "jam/net"
   discard <| IO.asTask (prio := .dedicated) do
     net.debug (describe a)
     match ← perform sh.backend a with
@@ -113,11 +113,11 @@ def writeVouchers (sh : Shell) (s : State) : IO Unit := do
     let h ← IO.FS.Handle.mk path .write
     IO.setAccessRights path private_
     h.putStrLn code
-    (sh.log.withModule "posse/store").notice s!"{c.name}: the voucher code is in {path}"
+    (sh.log.withModule "jam/store").notice s!"{c.name}: the voucher code is in {path}"
 
-/-- Take messages until posse stops. -/
+/-- Take messages until jam stops. -/
 partial def drive (sh : Shell) : IO Unit := do
-  let log := sh.log.withModule "posse/driver"
+  let log := sh.log.withModule "jam/driver"
   let some m ← IO.wait (← sh.inbox.recv) | return
   if ← sh.stop.get then return
   log.debug m.describe
@@ -127,7 +127,7 @@ partial def drive (sh : Shell) : IO Unit := do
   try
     sh.save c.state
     sh.writeVouchers c.state
-  catch e => (sh.log.withModule "posse/store").error s!"saving: {e}"
+  catch e => (sh.log.withModule "jam/store").error s!"saving: {e}"
   sh.display c.state
   for a in actions do launch sh a
   drive sh
@@ -136,7 +136,7 @@ partial def drive (sh : Shell) : IO Unit := do
 partial def watchEpoch (sh : Shell) : IO Unit := do
   try
     if let some n ← sh.backend.replicaEpoch then sh.post (.epoch n)
-  catch e => (sh.log.withModule "posse/net").warning s!"replica epoch: {e}"
+  catch e => (sh.log.withModule "jam/net").warning s!"replica epoch: {e}"
   if ← nap sh 60000 then watchEpoch sh
 
 /-- Start the driver and the epoch watcher, and whatever the saved state had under way. -/
@@ -147,4 +147,4 @@ def start (sh : Shell) (resumed : List Action) : IO Unit := do
 
 end Shell
 
-end Posse
+end Jam

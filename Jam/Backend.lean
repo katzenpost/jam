@@ -5,13 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 import CryptWalker.GroupChat.Member.Wire
 
-/-! # What posse asks of the network
+/-! # What jam asks of the network
 
-Everything posse does on the network goes through a `Backend`: the client daemon over the thin
+Everything jam does on the network goes through a `Backend`: the client daemon over the thin
 client, or `Sim`, an in-memory Pigeonhole for tests. Caps and indexes are opaque bytes: a write
 cap is 168 bytes, a read cap 136 (the write cap's last 136), an index 104. -/
 
-namespace Posse
+namespace Jam
 
 open CryptWalker.GroupChat.Member
 
@@ -68,4 +68,4 @@ def startOfWriteCap (writeCap : ByteArray) : Index := writeCap.extract (writeCap
 /-- The read cap of the stream a write cap writes. -/
 def readCapOf (writeCap : ByteArray) : ByteArray := writeCap.extract 32 writeCap.size
 
-end Posse
+end Jam

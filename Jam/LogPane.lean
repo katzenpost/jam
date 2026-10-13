@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Posse.Display
+import Jam.Display
 
 /-! # Log lines on screen
 
@@ -11,7 +11,7 @@ A stream for the logger that writes each line to the log file and also keeps the
 shown in a pane. Each line is filtered first, as text from the network is for the screen: a log
 quotes names and errors that came from elsewhere, and someone will read it in a terminal. -/
 
-namespace Posse.LogPane
+namespace Jam.LogPane
 
 /-- How many lines the pane keeps. -/
 def keep : Nat := 200
@@ -30,4 +30,4 @@ def stream (file : IO.FS.Stream) (lines : IO.Ref (Array String))
         (ls, ls)
       shown all }
 
-end Posse.LogPane
+end Jam.LogPane

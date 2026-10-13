@@ -29,4 +29,4 @@ jobs:
           path: .lake
           key: lean-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
       - run: make test
-      - run: lake build posse posse-integration
+      - run: lake build jam jam-integration

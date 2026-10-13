@@ -1,5 +1,5 @@
-name = "posse"
-defaultTargets = ["posse"]
+name = "jam"
+defaultTargets = ["jam"]
 
 [leanOptions]
 autoImplicit = false
@@ -8,7 +8,7 @@ relaxedAutoImplicit = false
 [[require]]
 name = "Tessera"
 git = "https://github.com/katzenpost/Tessera.git"
-rev = "0756de14afba813dc89ec2612bd7e37e69b6bc82"
+rev = "bf921ca5ba0f7ea2a57af562509013cf80186b45"
 
 [[require]]
 name = "Logger"
@@ -27,20 +27,20 @@ git = "https://github.com/katzenpost/CryptWalker.git"
 rev = "6e83bc855e46b6b6a6ec2f8916ce48039f51191a"
 
 [[lean_lib]]
-name = "Posse"
+name = "Jam"
 
 [[lean_exe]]
-name = "posse"
-root = "Posse.Main"
+name = "jam"
+root = "Jam.Main"
 
 [[lean_exe]]
-name = "posse-test"
-root = "Posse.Tests.Main"
+name = "jam-test"
+root = "Jam.Tests.Main"
 
 [[lean_exe]]
-name = "posse-integration"
-root = "Posse.Tests.Integration"
+name = "jam-integration"
+root = "Jam.Tests.Integration"
 
 [[lean_exe]]
-name = "posse-interop"
-root = "Posse.Tests.Interop"
+name = "jam-interop"
+root = "Jam.Tests.Interop"
