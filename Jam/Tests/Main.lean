@@ -3,17 +3,17 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Posse.Tests.Net
-import Posse.Tests.Util
-import Posse.Tests.Security
-import Posse.Ui
+import Jam.Tests.Net
+import Jam.Tests.Util
+import Jam.Tests.Security
+import Jam.Ui
 
-/-! # posse's tests
+/-! # jam's tests
 
-In one process, with no daemon: the codecs posse adds, and members chatting over a simulated
+In one process, with no daemon: the codecs jam adds, and members chatting over a simulated
 Pigeonhole. -/
 
-namespace Posse.Tests
+namespace Jam.Tests
 
 open CryptWalker.GroupChat.Member
 open CryptWalker.GroupChat.Member.Persist
@@ -245,6 +245,6 @@ def main : IO UInt32 := do
   IO.println s!"{pass} passed, {fail} failed"
   return if fail == 0 then 0 else 1
 
-end Posse.Tests
+end Jam.Tests
 
-def main : IO UInt32 := Posse.Tests.main
+def main : IO UInt32 := Jam.Tests.main

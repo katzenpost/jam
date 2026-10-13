@@ -3,21 +3,21 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Posse.Display
-import Posse.LogPane
-import Posse.Tests.Util
-import Posse.Ui
+import Jam.Display
+import Jam.LogPane
+import Jam.Tests.Util
+import Jam.Ui
 
 /-! # What a message cannot do to the screen
 
 Text from the network, random and known-hostile, through the filter and the real renderer: no
-character that would steer the terminal reaches a cell, every pane keeps its borders where posse
+character that would steer the terminal reaches a cell, every pane keeps its borders where jam
 put them, no row passes for another member's message, and pastes, names and the log are kept in
 their place. -/
 
-namespace Posse.Tests.Security
+namespace Jam.Tests.Security
 
-open Posse Posse.Display Posse.Tests
+open Jam Jam.Display Jam.Tests
 open Tessera.Untrusted (inRanges mixedScript)
 open CryptWalker.GroupChat.Member
 open Tessera
@@ -101,7 +101,7 @@ def chatWith (log : List Line) (names : List (ByteArray × String)) : Chat :=
 def frame (c : Chat) : Buffer :=
   (Ui.draw (Ui.markSeen { state := { me := "alice", chats := [c] }, network := "test" })).draw 100 30
 
-/-- Every row of the panes at the top keeps the borders between them where posse drew them. -/
+/-- Every row of the panes at the top keeps the borders between them where jam drew them. -/
 def bordersHold (b : Buffer) : Bool :=
   (List.range 16).all fun y =>
     [21, 22, 73, 74].all fun x => (b.get x (y + 1)).char == '│'
@@ -175,7 +175,7 @@ def logs : TestM Unit := do
   let buf ← IO.mkRef ({} : IO.FS.Stream.Buffer)
   let lines ← IO.mkRef (#[] : Array String)
   let s := LogPane.stream (IO.FS.Stream.ofBuffer buf) lines fun _ => pure ()
-  s.putStr "12:00:00.000 INFO posse: name \x1b]0;owned\x07 \u009b2J\n"
+  s.putStr "12:00:00.000 INFO jam: name \x1b]0;owned\x07 \u009b2J\n"
   let written := String.fromUTF8! (← buf.get).data
   check "the log file holds no control character but newlines"
     (clean (written.replace "\n" "") && (← lines.get).all clean)
@@ -188,4 +188,4 @@ def tests : TestM Unit := do
   pastes
   logs
 
-end Posse.Tests.Security
+end Jam.Tests.Security

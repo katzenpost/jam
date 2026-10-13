@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import Std.Data.HashMap
-import Posse.Backend
+import Jam.Backend
 
 /-! # An in-memory Pigeonhole
 
@@ -15,7 +15,7 @@ box, and anything else fails. An empty write is a tombstone. A voucher's stream 
 voucher itself, and the daemon's cryptography is left out: the sealed reply is the reply, and
 nothing is salted. -/
 
-namespace Posse.Sim
+namespace Jam.Sim
 
 open CryptWalker.GroupChat.Member
 
@@ -88,4 +88,4 @@ def backend (world : IO.Ref World) : Backend where
   replicaEpoch := return (← world.get).epoch
   maxPlaintext := return (← world.get).maxPlaintext
 
-end Posse.Sim
+end Jam.Sim

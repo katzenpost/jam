@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import ThinClient
-import Posse.Backend
+import Jam.Backend
 
 /-! # The client daemon
 
@@ -12,7 +12,7 @@ A `Backend` over the thin client: kpclientd does the Pigeonhole and voucher cryp
 are read and written as katzenqt does (`network.py`): encrypt, then have the daemon resend until a
 courier answers; a read reports a box not yet written at once rather than waiting for it. -/
 
-namespace Posse.Daemon
+namespace Jam.Daemon
 
 open ThinClient Cborg
 
@@ -83,4 +83,4 @@ def backend (client : Client) : Backend where
   maxPlaintext := runIO client do
     pure (← pigeonholeGeometry).maxPlaintextPayloadLength
 
-end Posse.Daemon
+end Jam.Daemon

@@ -3,16 +3,16 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Posse.Exec
-import Posse.Sim
+import Jam.Exec
+import Jam.Sim
 
 /-! # Members on a simulated network
 
-Several posse cores over one `Sim` world, in one process. Actions run one at a time, in order;
+Several jam cores over one `Sim` world, in one process. Actions run one at a time, in order;
 what is to happen later waits on a logical clock, which jumps to the next thing due whenever
 nothing else is left to do. -/
 
-namespace Posse.Tests
+namespace Jam.Tests
 
 open CryptWalker.GroupChat.Member
 
@@ -70,7 +70,7 @@ def chatOf (n : Net) (who : Nat) (name : String) : Option Chat := n.cores[who]!.
 def says (n : Net) (who : Nat) (name : String) (text : String) : Bool :=
   (chatOf n who name).any fun c => c.log.any (·.text == text)
 
-/-- A notice of posse's that begins with `text`. -/
+/-- A notice of jam's that begins with `text`. -/
 def noticed (n : Net) (who : Nat) (name : String) (text : String) : Bool :=
   (chatOf n who name).any fun c => c.log.any fun l => l.sender.size == 0 && l.text.startsWith text
 
@@ -82,4 +82,4 @@ def code? (n : Net) (who : Nat) (name : String) : Option String := do
   | some (.awaiting code ..) => some code
   | _ => none
 
-end Posse.Tests
+end Jam.Tests

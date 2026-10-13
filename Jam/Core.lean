@@ -6,13 +6,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 import CryptWalker.GroupChat.Member.Gcm
 import CryptWalker.GroupChat.Member.Membership
 import CryptWalker.GroupChat.Member.ReplyWho
-import Posse.Base64
-import Posse.Display
-import Posse.State
+import Jam.Base64
+import Jam.Display
+import Jam.State
 
-/-! # What posse does
+/-! # What jam does
 
-`step` takes posse's state and one message, from the user or from the network, and returns the
+`step` takes jam's state and one message, from the user or from the network, and returns the
 new state and the network work it asks for. It does no IO, so it can be tested on its own; the
 shell carries out each `Action` and sends back what came of it as another `Msg`.
 
@@ -21,7 +21,7 @@ each message sent, `written` once its box is written, `observe` for each box rea
 `handle` for a new epoch and for a user's scan, and for a new member `beginInduction`, then once
 everything owed is written `reply`, then `introduceNow`. -/
 
-namespace Posse
+namespace Jam
 
 open CryptWalker.GroupChat.Member
 
@@ -166,9 +166,9 @@ def textOf (content : ByteArray) : String :=
   match Gcm.decode content with
   | some g =>
     if g.msgType = Gcm.MsgType.text then g.text.getD ""
-    else if g.msgType = Gcm.MsgType.fileUpload then "[a file, which posse cannot show yet]"
-    else "[a message posse cannot show]"
-  | none => "[a message posse cannot read]"
+    else if g.msgType = Gcm.MsgType.fileUpload then "[a file, which jam cannot show yet]"
+    else "[a message jam cannot show]"
+  | none => "[a message jam cannot read]"
 
 /-- Do what the member asks. -/
 def effects (c : Chat) (es : List Effect) : CoreM Chat := do
@@ -202,7 +202,7 @@ def label (c : Chat) (key : Key) : String :=
   if c.group.any (·.me == key) then "me"
   else "~" ++ (Display.name ((c.names.get? key).getD "?")).text
 
-/-- Notes for the conversation about a box: who an `Introduction` introduced, or a message posse
+/-- Notes for the conversation about a box: who an `Introduction` introduced, or a message jam
 cannot show. -/
 def remark (c : Chat) (stream : Key) (plaintext : ByteArray) : Chat :=
   match Gcm.unframe plaintext with
@@ -214,7 +214,7 @@ def remark (c : Chat) (stream : Key) (plaintext : ByteArray) : Chat :=
       else c.notice s!"{label c stream} added ~{(Display.name i.name).text}"
     | none => c
   | .indirection .. | .continued _ =>
-    c.notice s!"{label c stream} sent a long message, which posse cannot show yet"
+    c.notice s!"{label c stream} sent a long message, which jam cannot show yet"
   | .unknown => c
 
 /-! ## Under way -/
@@ -489,4 +489,4 @@ def acknowledged (c : Chat) (l : Line) : Bool :=
   | some g, some n => g.ledger.ackedBy.values.any (n ≤ ·)
   | _, _ => false
 
-end Posse
+end Jam

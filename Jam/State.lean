@@ -4,15 +4,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import CryptWalker.GroupChat.Member.Persist
-import Posse.Backend
+import Jam.Backend
 
-/-! # What posse keeps
+/-! # What jam keeps
 
 One `Chat` per conversation: our stream, the member state machine, where we have read each
 member's stream, the boxes still to write, and the conversation as shown. It is saved whole, as
 CBOR, after every change. -/
 
-namespace Posse
+namespace Jam
 
 open CryptWalker.GroupChat.Member
 open CryptWalker.GroupChat.Member.Persist
@@ -171,4 +171,4 @@ instance : Persist State where
   toTerm s := .TList #[toTerm s.me, toTerm s.chats]
   ofTerm t := do let fs ← fieldsOf t 2; some ⟨← fieldAt fs 0, ← fieldAt fs 1⟩
 
-end Posse
+end Jam

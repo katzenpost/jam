@@ -3,18 +3,18 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Posse.Daemon
-import Posse.LogPane
-import Posse.Shell
-import Posse.Sim
-import Posse.Ui
-import Posse.Display
+import Jam.Daemon
+import Jam.LogPane
+import Jam.Shell
+import Jam.Sim
+import Jam.Ui
+import Jam.Display
 
-/-! # posse
+/-! # jam
 
 A terminal group chat over the Katzenpost mixnet that speaks katzenqt's group chat. -/
 
-open Posse Logger
+open Jam Logger
 open CryptWalker.GroupChat.Member.Persist
 
 structure Config where
@@ -23,12 +23,12 @@ structure Config where
   stateDir : Option System.FilePath := none
   logFile : Option System.FilePath := none
   name : Option String := none
-  /-- An in-memory network instead of the daemon, to try posse alone. -/
+  /-- An in-memory network instead of the daemon, to try jam alone. -/
   sim : Bool := false
 
 def usage : String :=
-  "usage: posse [--daemon @katzenpost | PATH | HOST:PORT] [--state DIR] [--name NAME] [--log FILE] [--sim]
-The log level is POSSE_LOG: critical, error, warning, notice, info (the default) or debug."
+  "usage: jam [--daemon @katzenpost | PATH | HOST:PORT] [--state DIR] [--name NAME] [--log FILE] [--sim]
+The log level is JAM_LOG: critical, error, warning, notice, info (the default) or debug."
 
 def parseArgs : Config → List String → Except String Config
   | c, [] => pure c
@@ -43,7 +43,7 @@ def defaultStateDir : IO System.FilePath := do
   let base ← match ← IO.getEnv "XDG_DATA_HOME" with
     | some d => pure (d : System.FilePath)
     | none => pure ((← IO.getEnv "HOME").getD "." / ".local" / "share")
-  pure (base / "posse" / ((← IO.getEnv "POSSE_STATE").getD "default"))
+  pure (base / "jam" / ((← IO.getEnv "JAM_STATE").getD "default"))
 
 def connect (daemon : String) : IO ThinClient.Client := do
   let dial ← if daemon.startsWith "@" || daemon.startsWith "/" then
@@ -59,7 +59,7 @@ def connect (daemon : String) : IO ThinClient.Client := do
   | .ok c => pure c
   | .error e => throw (IO.userError s!"connecting to the daemon at {daemon}: {e}")
 
-/-- Put the terminal back as it was: for a signal, which ends posse without unwinding. -/
+/-- Put the terminal back as it was: for a signal, which ends jam without unwinding. -/
 def restoreTerminal : IO Unit := do
   try CrosstermFfi.disableBracketedPaste catch _ => pure ()
   try CrosstermFfi.showCursor catch _ => pure ()
@@ -104,14 +104,14 @@ where
     | none => defaultStateDir
   IO.FS.createDirAll dir
   IO.setAccessRights dir { user := { read := true, write := true, execution := true } }
-  let logPath := cfg.logFile.getD (dir / "posse.log")
+  let logPath := cfg.logFile.getD (dir / "jam.log")
   let logFile ← Logger.Output.open (.file logPath)
   IO.setAccessRights logPath Shell.private_
   let logLines ← IO.mkRef (#[] : Array String)
   -- The pane shows the log once the UI is up; until then lines only go to the file.
   let showLogs ← IO.mkRef (fun (_ : Array String) => (pure () : IO Unit))
   let log ← Logger.new (.stream (LogPane.stream logFile logLines fun ls => do (← showLogs.get) ls))
-    (← Level.fromEnv "POSSE_LOG" .info) "posse"
+    (← Level.fromEnv "JAM_LOG" .info) "jam"
   let statePath := dir / "state.cbor"
   let saved : Option State ← if ← statePath.pathExists then
       pure (load (← IO.FS.readBinFile statePath))

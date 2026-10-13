@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import CryptWalker.GroupChat.Member.Walk
-import Posse.Core
+import Jam.Core
 
 /-! # Carrying out an action
 
@@ -12,7 +12,7 @@ import Posse.Core
 that it is to be tried again later. Waiting is left to the caller, so that the app can sleep and a
 test can step a simulated clock. -/
 
-namespace Posse
+namespace Jam
 
 open CryptWalker.GroupChat.Member
 
@@ -90,4 +90,4 @@ def perform (b : Backend) (a : Action) : IO Outcome := do
     | .read .. | .scanRead .. => return .retry a retryMs
     | _ => return .done (.failed chat s!"{describe a} failed: {e}")
 
-end Posse
+end Jam

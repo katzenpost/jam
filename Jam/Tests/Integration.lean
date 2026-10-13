@@ -3,26 +3,26 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Posse.Tests.Live
+import Jam.Tests.Live
 
-/-! # posse against a real mixnet
+/-! # jam against a real mixnet
 
 Two members, each with its own connection to a client daemon: Alice founds a group, Bob joins it
 with a voucher Alice inducts, and each reads the other's message; then Bob's next message
 acknowledges Alice's. Each member runs as the app does, through a `Shell`, logging to standard
 error.
 
-Usage: `posse-integration [@katzenpost | PATH | HOST:PORT] [minutes]`. -/
+Usage: `jam-integration [@katzenpost | PATH | HOST:PORT] [minutes]`. -/
 
-open Posse Posse.Tests.Live Logger
+open Jam Jam.Tests.Live Logger
 
 def main (args : List String) : IO UInt32 := do
   let daemon := args.headD "@katzenpost"
   let minutes := (args[1]?.bind String.toNat?).getD 30
   let deadline := (← IO.monoMsNow) + minutes * 60000
-  let dir : System.FilePath := ".lake/posse-integration"
+  let dir : System.FilePath := ".lake/jam-integration"
   IO.FS.createDirAll dir
-  let log ← Logger.new .stderr (← Level.fromEnv "POSSE_LOG" .info)
+  let log ← Logger.new .stderr (← Level.fromEnv "JAM_LOG" .info)
   let stop ← IO.mkRef false
   let alice ← member daemon "alice" dir log stop
   let bob ← member daemon "bob" dir log stop

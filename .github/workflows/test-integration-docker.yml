@@ -28,8 +28,8 @@ jobs:
         with:
           path: .lake
           key: lean-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
-      - name: Build posse's integration test
-        run: lake exe cache get && lake build posse-integration
+      - name: Build jam's integration test
+        run: lake exe cache get && lake build jam-integration
       - name: Run it against the docker mixnet
         timeout-minutes: 60
         run: ./test-integration.sh

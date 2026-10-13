@@ -4,8 +4,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import Tessera
-import Posse.Core
-import Posse.Display
+import Jam.Core
+import Jam.Display
 
 /-! # The terminal UI
 
@@ -14,7 +14,7 @@ reads what is written there, each with the start of their key, since a display n
 its owner chose. Below, the log, which F2 hides, then the line to type into, which names the group
 it goes to. A line typed beginning with `/` is a command.
 
-posse, not the sender, decides what each part of the screen says, as Yee's trusted path asks:
+jam, not the sender, decides what each part of the screen says, as Yee's trusted path asks:
 
 - Everything drawn is `Display.Shown`: text from the network has been filtered on its way.
 - A member's own name is shown after `~`, as a name they chose; ours as `me`, which no member can
@@ -22,14 +22,14 @@ posse, not the sender, decides what each part of the screen says, as Yee's trust
   scripts, also shows the start of its key.
 - Every row a message takes after its first, whether its sender broke the line or it wraps, starts
   with a gutter, so a message cannot pass for another one below it.
-- posse's own notices are drawn in a style no message has, and begin with `--`.
+- jam's own notices are drawn in a style no message has, and begin with `--`.
 - Pasting into an empty line types a message, never a command, and a message of several lines is
-  sent only on a second Enter, after posse has said how many lines it is. -/
+  sent only on a second Enter, after jam has said how many lines it is. -/
 
-namespace Posse.Ui
+namespace Jam.Ui
 
 open Tessera Widget
-open Posse.Display
+open Jam.Display
 open Tessera.Untrusted (skeleton mixedScript)
 open CryptWalker.GroupChat.Member
 
@@ -56,7 +56,7 @@ structure Ui where
   blank : Bool := false
   /-- How many lines of each conversation have been shown. -/
   seen : List (String × Nat) := []
-  /-- What posse is connected to. -/
+  /-- What jam is connected to. -/
   network : String := ""
   deriving Inhabited
 
@@ -65,7 +65,7 @@ def help : String :=
 
 def logRows : Nat := 6
 
-/-- How posse's own notices are drawn; a message is never drawn so. -/
+/-- How jam's own notices are drawn; a message is never drawn so. -/
 def noticeStyle : Style := { Style.fgOf .yellow with bold := true }
 
 def current (u : Ui) : Option Chat := u.state.chats[u.selected]?
@@ -174,11 +174,11 @@ def status (u : Ui) : Shown :=
     (if u.note.isEmpty then ofApp "F1 help" else text u.note)
 
 def draw (u : Ui) : Widget :=
-  if u.blank then center (str "posse · F10 to return") else
+  if u.blank then center (str "jam · F10 to return") else
   let (title, conversation, who) := match current u with
     | some c => (ofApp " " ++ name c.name ++ ofApp " ",
                  fun w => c.log.flatMap (rows u c · w), members u c)
-    | none => (ofApp " posse ",
+    | none => (ofApp " jam ",
                fun w => (["No groups yet.", "", help].flatMap (wrap w)).map ({}, ·), [])
   let target := match current u with
     | some c => ofApp " [" ++ name c.name ++ ofApp "] > "
@@ -294,4 +294,4 @@ def update (send : Msg → IO Unit) : Tessera.Msg Event → Ui → IO (Ui × Boo
     pure ({ u with pasted := u.pasted || first }, false)
   | _, u => pure (u, false)
 
-end Posse.Ui
+end Jam.Ui
