@@ -8,12 +8,12 @@ relaxedAutoImplicit = false
 [[require]]
 name = "Tessera"
 git = "https://github.com/katzenpost/Tessera.git"
-rev = "02978190a85be164ca69913a1de6818949f347ca"
+rev = "0756de14afba813dc89ec2612bd7e37e69b6bc82"
 
 [[require]]
 name = "Logger"
 git = "https://github.com/katzenpost/Logger.git"
-rev = "655dfe7fb1eacc38cbf10362a865fd40992e184b"
+rev = "61f4fc02ffa00401d59d98f25feda499f26b10e2"
 
 [[require]]
 name = "thinclient"
@@ -24,7 +24,7 @@ rev = "5e96c63e95a99db2e9a74e44c09cb8a0b31c5619"
 [[require]]
 name = "CryptWalker"
 git = "https://github.com/katzenpost/CryptWalker.git"
-rev = "a2e4c81a105b8a51db2e2618240a219b7cb74175"
+rev = "6e83bc855e46b6b6a6ec2f8916ce48039f51191a"
 
 [[lean_lib]]
 name = "Posse"
