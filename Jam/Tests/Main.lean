@@ -257,6 +257,9 @@ def ui : TestM Unit := do
   let d ← drive u [key (.f 1), key .esc]
   check "Esc closes it, and does not quit" (!d.ui.help && !d.quit)
   check "/help opens it too" (← drive u (line "/help")).ui.help
+  let long := ((Ui.draw { u with state := { me := "alice", chats := [{ name := "claude-demo" }] } }).draw 100 30).lines
+  check "a group's whole name is shown in the list" (has long "│claude-demo")
+  check "a group not joined yet says so" (has long "not joined yet")
   let two := { u with state := { me := "alice", chats := [chat, { name := "h" }] } }
   let d ← drive two [click 3 3]
   check "a click selects a group" (d.ui.selected == 1)

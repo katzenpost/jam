@@ -251,7 +251,9 @@ def groupRow (u : Ui) (c : Chat) : W :=
   let n := unread u c
   let state := if c.joining.isSome then t!" joining…" else if c.inducting.isSome then t!" adding…"
     else if c.group.isNone then t!" …" else .empty
-  vLimit 1 <| hBox [withStyle { bold := true } (str (text c.name)), fill,
+  -- As wide as the list: ListView puts a selected row in a box with a fill of its own, which
+  -- would otherwise take half the room.
+  hLimit (groupsWidth - 2) <| vLimit 1 <| hBox [withStyle { bold := true } (str (text c.name)), fill,
     withStyle Theme.quiet (str state),
     if n > 0 then withStyle Theme.unread (str (t!" " ++ .ofNat n ++ t!" ")) else .empty]
 
@@ -262,7 +264,7 @@ def groups (u : Ui) : W :=
 could be mistaken is marked. -/
 def members (u : Ui) (c : Chat) : W :=
   match c.group with
-  | none => withStyle Theme.quiet (txt t!"not in the group yet")
+  | none => vBox [withStyle Theme.quiet (txt t!"not in the group yet"), fill]
   | some g =>
     let doubt := doubtful u c
     let others := g.readers.keys.map fun k => ((c.names.get? k).getD "?", k)
@@ -324,9 +326,12 @@ def header (u : Ui) : W :=
   let part (i : Nat) (t : Shown) := withStyle (shade i) (str (lit t!" " ++ t ++ lit t!" "))
   let about : List W := match current u with
     | some c =>
-      let count := c.group.map (fun g => g.readers.keys.length + 1) |>.getD 0
-      let epoch := c.group.map (fun g => t!" · epoch " ++ .ofNat g.epoch) |>.getD .empty
-      [part 1 (text c.name), part 2 ((Text.ofNat count ++ t!" members" ++ epoch).lift)]
+      let about : Text CS .app := match c.group with
+        | some g =>
+          let n := g.readers.keys.length + 1
+          Text.ofNat n ++ (if n == 1 then t!" member" else t!" members") ++ t!" · epoch " ++ .ofNat g.epoch
+        | none => t!"not joined yet"
+      [part 1 (text c.name), part 2 about.lift]
     | none => [part 1 (t!"no group yet" : Text CS .app).lift]
   vLimit 1 <| hBox ([part 0 (t!"≋ jam" : Text CS .app).lift] ++ about ++
     [withStyle (shade 3) fill, part 2 (text u.network)])
