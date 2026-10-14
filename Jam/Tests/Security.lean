@@ -7,6 +7,7 @@ import Jam.Display
 import Jam.LogPane
 import Jam.Tests.Util
 import Jam.Ui
+import Jam.Tests.Drive
 
 /-! # What a message cannot do to the screen
 
@@ -18,9 +19,10 @@ their place. -/
 namespace Jam.Tests.Security
 
 open Jam Jam.Display Jam.Tests
-open Tessera.Untrusted (inRanges mixedScript)
+open Tessera.Untrusted.Ident (mixedScript)
 open CryptWalker.GroupChat.Member
 open Tessera
+open Tessera (inRanges)
 
 /-- A character the terminal would act on, or could reorder or hide text by. -/
 def forbidden (c : Char) : Bool :=
@@ -66,7 +68,7 @@ def fuzz : TestM Unit := do
     let (len, g') := randNat g 0 80
     let (s, g'') := randomString g' len
     g := g''
-    if !(clean (text s).text && (body s).all (clean ·.text) && clean (name s).text) then
+    if !(clean (text s).text && (body s).all (clean ·.text) && clean (name s).text.text) then
       ok := false
   check "random text never leaves a forbidden character" ok
 
@@ -98,15 +100,15 @@ def chatWith (log : List Line) (names : List (ByteArray × String)) : Chat :=
   { name := "g", group := some { g with readers := Dict.ofList readers },
     names := Dict.ofList names, log }
 
-def frame (c : Chat) : Buffer :=
+def frame (c : Chat) : Buffer CS 100 30 :=
   (Ui.draw (Ui.markSeen { state := { me := "alice", chats := [c] }, network := "test" })).draw 100 30
 
-/-- Every row of the panes at the top keeps the borders between them where jam drew them. -/
-def bordersHold (b : Buffer) : Bool :=
-  (List.range 16).all fun y =>
-    [21, 22, 73, 74].all fun x => (b.get x (y + 1)).char == '│'
+/-- Every row inside the panes at the top keeps the borders between them where jam drew them. -/
+def bordersHold (b : Buffer CS 100 30) : Bool :=
+  (List.range 15).all fun y =>
+    [21, 22, 73, 74].all fun x => (b.get x (y + 2)).char == '│'
 
-def cellsClean (b : Buffer) : Bool :=
+def cellsClean (b : Buffer CS 100 30) : Bool :=
   (List.range b.height).all fun y => (List.range b.width).all fun x =>
     let c := b.get x y
     c.isContinuation || !forbidden c.char
@@ -121,9 +123,9 @@ def renderer : TestM Unit := do
     check s!"{what}: nothing that steers a terminal is sent" (!(Display.outgoing payload).any steers)
 
 /-- The rows of the conversation pane, as text. -/
-def conversation (b : Buffer) : List String :=
-  (List.range 16).map fun y => String.ofList ((List.range 50).map fun x =>
-    let c := b.get (23 + x) (y + 1)
+def conversation (b : Buffer CS 100 30) : List String :=
+  (List.range 15).map fun y => String.ofList ((List.range 50).map fun x =>
+    let c := b.get (23 + x) (y + 2)
     if c.isContinuation then ' ' else c.char)
 
 def spoofing : TestM Unit := do
@@ -140,36 +142,43 @@ def spoofing : TestM Unit := do
   check "a member called me is not me" ((conversation (frame named)).any (·.startsWith "~me"))
   let notice := chatWith [{ id := 0, sender := bob, text := "-- alice added mallory" }] [(bob, "bob")]
   check "a message is never drawn as a notice"
-    ((conversation (frame notice)).any (·.startsWith "~bob: -- alice added mallory"))
+    ((conversation (frame notice)).any fun r => r.startsWith "~bob" && (r.splitOn "-- alice added mallory").length > 1)
+  let row := (List.range 50).find? fun x => match (frame notice).get (23 + x) 2 with
+    | .glyph g _ => g.char == '-'
+    | _ => false
+  check "and its text is drawn in a style a notice never has"
+    (match row with
+     | some x => !((frame notice).get (23 + x) 2).style.reserved
+     | none => false)
 
 def names : TestM Unit := do
-  check "a name cannot show a check mark" (!(name "bob ✓✓").text.any (· == '✓'))
-  check "a name cannot reorder" (clean (name "bob‮evil").text)
-  check "a name is cut short" ((name (String.ofList (List.replicate 200 'a'))).text.length ≤ maxName)
-  check "a name keeps to one line" (!(name "bob\nalice").text.any (· == '\n'))
+  check "a name cannot show a check mark" (!(name "bob ✓✓ √").text.text.any fun c => c == '✓' || c == '√')
+  check "a name cannot reorder" (clean (name "bob‮evil").text.text)
+  check "a name is cut short" ((name (String.ofList (List.replicate 200 'a'))).text.text.length ≤ maxName)
+  check "a name keeps to one line" (!(name "bob\nalice").text.text.any (· == '\n'))
   let c := chatWith [] [(bob, "alice"), (carol, "аlice")]
   let u : Ui.Ui := { state := { me := "zed", chats := [c] } }
   check "names that look alike are both marked" ((Ui.doubtful u c).length == 2)
   let u2 : Ui.Ui := { state := { me := "bob", chats := [chatWith [] [(bob, "B0B")]] } }
   check "a name like ours is marked" ((Ui.doubtful u2 (chatWith [] [(bob, "B0B")])).length == 1)
-  check "mixed scripts are noticed" (mixedScript "pаypal" && !mixedScript "paypal")
+  check "mixed scripts are noticed" (mixedScript (name "pаypal") && !mixedScript (name "paypal"))
 
 def pastes : TestM Unit := do
-  let sent ← IO.mkRef (#[] : Array Msg)
-  let send := fun m => sent.modify (·.push m)
   let u : Ui.Ui := { state := { me := "alice", chats := [chatWith [] []] } }
-  let (u1, _) ← Ui.update send (.input (.paste "/leave g")) u
-  let (_, _) ← Ui.update send (.input (.key .enter {})) u1
-  check "a pasted command is sent as a message" (match (← sent.get).toList with
+  let d ← drive u [paste "/leave g", key .enter]
+  check "a pasted command is sent as a message" (match d.sent.toList with
     | [.send "g" "/leave g"] => true
     | _ => false)
-  sent.set #[]
-  let (u2, _) ← Ui.update send (.input (.paste "one\x1b[201~\ntwo\nthree")) u
-  check "a paste loses its markers" (!u2.input.any (· == '\x1b'))
-  let (u3, _) ← Ui.update send (.input (.key .enter {})) u2
-  check "several lines are not sent on the first Enter" ((← sent.get).isEmpty && u3.confirming)
-  let (_, _) ← Ui.update send (.input (.key .enter {})) u3
-  check "they are on the second" ((← sent.get).size == 1)
+  let d ← drive u [paste "one\x1b[201~\ntwo\nthree"]
+  check "a paste loses its markers" (d.ui.pastedLines.any fun p => !p.any (· == '\x1b'))
+  let d ← drive u [paste "one\x1b[201~\ntwo\nthree", key .enter]
+  check "several lines are not sent on the first Enter" (d.sent.isEmpty && d.ui.confirming)
+  let d ← drive u [paste "one\ntwo\nthree", key .enter, key .enter]
+  check "they are on the second" (match d.sent.toList with
+    | [.send "g" "one\ntwo\nthree"] => true
+    | _ => false)
+  let d ← drive u [paste "one\ntwo", key .esc]
+  check "Esc drops a paste of several lines, and does not quit" (d.ui.pastedLines.isNone && !d.quit)
 
 def logs : TestM Unit := do
   let buf ← IO.mkRef ({} : IO.FS.Stream.Buffer)
@@ -180,7 +189,32 @@ def logs : TestM Unit := do
   check "the log file holds no control character but newlines"
     (clean (written.replace "\n" "") && (← lines.get).all clean)
 
+/-- The style of the first cell in the conversation pane holding `ch`, on row `y` of it. -/
+def styleAt (b : Buffer CS 100 30) (y : Nat) (ch : Char) : Option Tessera.Style :=
+  ((List.range 50).find? fun x => match b.get (23 + x) (y + 2) with
+    | .glyph g _ => g.char == ch
+    | _ => false).map fun x => (b.get (23 + x) (y + 2)).style
+
+def colours : TestM Unit := do
+  let mine := ((chatWith [] []).group.map fun (g : Group) => g.me).getD .empty
+  let c := chatWith [{ id := 0, sender := bob, text := "hello" },
+    { id := 1, text := "bob added carol" }, { id := 2, sender := mine, text := "mine" }] [(bob, "bob")]
+  let b := frame c
+  check "a member's name is drawn in their colour, which is not one of jam's"
+    (styleAt b 0 '~' == some (Theme.member bob).toStyle && !(Theme.member bob).toStyle.reserved)
+  check "a notice is drawn in jam's style" (styleAt b 1 '-' == some Theme.notice && Theme.notice.reserved)
+  check "me is drawn in jam's style" (styleAt b 2 'm' == some Theme.me && Theme.me.reserved)
+  check "a member's colour is the same for the same key" (Theme.member bob == Theme.member (bob.extract 0 3))
+  check "members' colours differ" (Theme.member bob != Theme.member carol)
+  let plain := b.mapStyle (Style.downgrade .none)
+  check "without colour, a notice is still drawn in a style no message has"
+    (styleAt plain 1 '-' |>.any (·.reserved))
+  check "and a member's name still is not"
+    (styleAt plain 0 '~' |>.any (!·.reserved))
+  check "without colour, nothing forbidden reaches a cell either" (cellsClean plain)
+
 def tests : TestM Unit := do
+  colours
   fuzz
   renderer
   spoofing
