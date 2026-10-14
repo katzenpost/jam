@@ -8,7 +8,7 @@ relaxedAutoImplicit = false
 [[require]]
 name = "Tessera"
 git = "https://github.com/katzenpost/Tessera.git"
-rev = "bf921ca5ba0f7ea2a57af562509013cf80186b45"
+rev = "563fceefa60437ffdfff2f7319c188a499f8cf0b"
 
 [[require]]
 name = "Logger"
@@ -19,6 +19,12 @@ rev = "61f4fc02ffa00401d59d98f25feda499f26b10e2"
 name = "thinclient"
 git = "https://github.com/katzenpost/thin_client.git"
 rev = "5e96c63e95a99db2e9a74e44c09cb8a0b31c5619"
+
+# Pinned here to the head of its main, a merge of the commit thin_client pins.
+[[require]]
+name = "lean_unix_socket"
+git = "https://github.com/katzenpost/lean_unix_socket.git"
+rev = "4bbfd6bb9df6bc9ce0d31252afff86d48683c9f2"
 
 # Declared last so that it is the CryptWalker Lake resolves, ahead of thin_client's older pin.
 [[require]]
