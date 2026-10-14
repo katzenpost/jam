@@ -7,6 +7,7 @@ import Jam.Tests.Net
 import Jam.Tests.Util
 import Jam.Tests.Security
 import Jam.Ui
+import Jam.Tests.Drive
 
 /-! # jam's tests
 
@@ -197,56 +198,78 @@ def persistState : TestM Unit := do
   let back : Option State := load (save s)
   check "state saves and loads" (back.any fun b => b.me == "alice" && b.chats.length == 1)
 
-/-- Type `line` and press Enter. -/
-def typeLine (send : Msg → IO Unit) (u : Ui.Ui) (line : String) : IO Ui.Ui := do
-  let u ← line.toList.foldlM (fun u c => do
-    pure (← Ui.update send (.input (.key (.char c) {})) u).1) u
-  pure (← Ui.update send (.input (.key .enter {})) u).1
-
 def ui : TestM Unit := do
-  let sent ← IO.mkRef (#[] : Array Msg)
-  let send := fun m => sent.modify (·.push m)
   let chat : Chat :=
     { name := "g", names := Dict.ofList [(ByteArray.mk #[1], "bob")],
       log := [{ id := 0, sender := ByteArray.mk #[1], text := "hello from bob" },
               { id := 1, text := "bob added carol" }] }
   let u : Ui.Ui := { state := { me := "alice", chats := [chat] } }
+  let has (lines : List String) (s : String) := lines.any fun l => (l.splitOn s).length > 1
   let shown := ((Ui.draw u).draw 100 30).lines
-  check "the conversation is drawn" (shown.any fun l => (l.splitOn "bob: hello from bob").length > 1)
-  check "a notice is drawn" (shown.any fun l => (l.splitOn "-- bob added carol").length > 1)
-  check "the input line names its group" (shown.any fun l => (l.splitOn "[g] >").length > 1)
+  check "the conversation is drawn" (has shown "hello from bob" && has shown "~bob")
+  check "a notice is drawn" (has shown "-- bob added carol")
+  check "the input line names its group" (has shown "[g]")
+  check "the header names jam and the group" (has shown "≋ jam" && has shown " g ")
   let hidden := ((Ui.draw { u with showLog := false }).draw 100 30).lines
-  check "F2's pane can be hidden" (!hidden.any fun l => (l.splitOn " log (F2").length > 1)
-  check "the log pane is shown" (shown.any fun l => (l.splitOn " log (F2").length > 1)
-  let typed ← "hi there".toList.foldlM (fun u c => do
-    pure (← Ui.update send (.input (.key (.char c) {})) u).1) u
-  let (u2, quit) ← Ui.update send (.input (.key .enter {})) typed
-  check "enter sends the line to the selected group" (match (← sent.get).toList with
+  check "F2's pane can be hidden" (!has hidden "log · F2")
+  check "the log pane is shown" (has shown "log · F2")
+  check "with no group, the welcome shows how to start"
+    (has ((Ui.draw { state := { me := "alice" } }).draw 100 30).lines "/new NAME")
+  let d ← drive u (line "hi there")
+  check "enter sends the line to the selected group" (match d.sent.toList with
     | [.send "g" "hi there"] => true
     | _ => false)
-  check "enter clears the line" (u2.input.isEmpty && !quit)
-  let u3 ← typeLine send u2 "/new h"
-  check "/new creates a group" (match (← sent.get).toList.getLast? with
-    | some (.create "h") => true
+  check "enter clears the line" (d.ui.input.length == 0 && !d.quit)
+  let d ← drive u (line "/new h")
+  check "/new creates a group" (match d.sent.toList with
+    | [.create "h"] => true
     | _ => false)
-  let (u4, _) ← Ui.update send (.custom (.state { me := "alice", chats := [chat, { name := "h" }] })) u3
-  check "the new group is selected once it appears" (u4.selected == 1)
-  let (_, quit) ← Ui.update send (.input (.key .esc {})) u4
-  check "escape quits" quit
-  let before := (← sent.get).size
-  let taken ← typeLine send u4 "/join h"
+  let d ← drive u (line "/new h" ++ [.custom (.state { me := "alice", chats := [chat, { name := "h" }] })])
+  check "the new group is selected once it appears" (d.ui.selected == 1)
+  let u4 := { d.ui with note := "" }
+  check "escape quits" (← drive u4 [key .esc]).quit
+  let d ← drive u4 (line "/join h")
   check "/join under a name already used is refused, and says why"
-    ((← sent.get).size == before && taken.note.startsWith "you already have a group called h")
-  let taken ← typeLine send u4 "/new g"
-  check "so is /new" ((← sent.get).size == before && taken.note.startsWith "you already have a group called g")
-  let u6 ← typeLine send u4 "/leave"
-  check "/leave asks for the group's name" (u6.note.startsWith "to leave h")
-  discard <| typeLine send u6 "/leave h"
-  check "/leave with the group's name leaves" (match (← sent.get).toList.getLast? with
-    | some (.leave "h") => true
+    (d.sent.isEmpty && d.ui.note.startsWith "you already have a group called h")
+  let d ← drive u4 (line "/new g")
+  check "so is /new" (d.sent.isEmpty && d.ui.note.startsWith "you already have a group called g")
+  let d ← drive u4 (line "/leave")
+  check "/leave asks for the group's name" (d.ui.note.startsWith "to leave h")
+  let d ← drive u4 (line "/leave h")
+  check "/leave with the group's name leaves" (match d.sent.toList with
+    | [.leave "h"] => true
     | _ => false)
-  let u5 ← typeLine send u4 "/bogus"
-  check "an unknown command says so" (u5.note.startsWith "no such command")
+  check "an unknown command says so" ((← drive u4 (line "/bogus")).ui.note.startsWith "no such command")
+  -- Easier to use
+  let d ← drive u (typed "/inv" ++ [key .tab])
+  check "Tab completes a command" (d.ui.input.text.text == "/invite ")
+  check "and does not change the group" (d.ui.selected == 0)
+  check "a command being typed is hinted" ((Ui.hint (← drive u (typed "/inv")).ui).any fun h =>
+    (h.text.splitOn "/invite CODE").length > 1)
+  let d ← drive u4 [key .tab]
+  check "Tab with nothing typed moves to the next group" (d.ui.selected == 0)
+  let d ← drive u (line "first" ++ line "second" ++ [key .up, key .up])
+  check "Up brings back what was sent" (d.ui.input.text.text == "first")
+  let d ← drive u (typed "helo" ++ [key .left, key .left] ++ typed "l")
+  check "the cursor moves, and typing goes in at it" (d.ui.input.text.text == "hello")
+  let d ← drive u [key (.f 1)]
+  check "F1 opens the help" (d.ui.help && has ((Ui.draw d.ui).draw 100 30).lines "/invite")
+  let d ← drive u [key (.f 1), key .esc]
+  check "Esc closes it, and does not quit" (!d.ui.help && !d.quit)
+  check "/help opens it too" (← drive u (line "/help")).ui.help
+  let long := ((Ui.draw { u with state := { me := "alice", chats := [{ name := "claude-demo" }] } }).draw 100 30).lines
+  check "a group's whole name is shown in the list" (has long "│claude-demo")
+  check "a group not joined yet says so" (has long "not joined yet")
+  let two := { u with state := { me := "alice", chats := [chat, { name := "h" }] } }
+  let d ← drive two [click 3 3]
+  check "a click selects a group" (d.ui.selected == 1)
+  let d ← drive two [click 50 5]
+  check "a click elsewhere does not" (d.ui.selected == 0)
+  let d ← drive { u with scroll := 0 } [.terminal (.mouse { kind := .scrollUp, column := 50, row := 5 })]
+  check "the wheel scrolls the conversation" (d.ui.scroll == 3)
+  let d ← drive u [paste "one\ntwo\nthree"]
+  check "a paste of several lines is shown as such"
+    (has ((Ui.draw d.ui).draw 100 30).lines "3 lines pasted")
 
 def main : IO UInt32 := do
   let ((), (pass, fail)) ← (do

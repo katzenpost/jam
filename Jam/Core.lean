@@ -200,7 +200,7 @@ def messageOf (plaintext : ByteArray) : Option Message :=
 /-- A member as a notice names them: `me`, or the name they chose, filtered, after `~`. -/
 def label (c : Chat) (key : Key) : String :=
   if c.group.any (·.me == key) then "me"
-  else "~" ++ (Display.name ((c.names.get? key).getD "?")).text
+  else "~" ++ (Display.name ((c.names.get? key).getD "?")).text.text
 
 /-- Notes for the conversation about a box: who an `Introduction` introduced, or a message jam
 cannot show. -/
@@ -211,7 +211,7 @@ def remark (c : Chat) (stream : Key) (plaintext : ByteArray) : Chat :=
     | some i =>
       let c := { c with names := c.names.setDefault (keyOf i.readCap) i.name }
       if c.group.any (·.me == keyOf i.readCap) then c
-      else c.notice s!"{label c stream} added ~{(Display.name i.name).text}"
+      else c.notice s!"{label c stream} added ~{(Display.name i.name).text.text}"
     | none => c
   | .indirection .. | .continued _ =>
     c.notice s!"{label c stream} sent a long message, which jam cannot show yet"
@@ -370,7 +370,7 @@ def handle : Msg → CoreM Unit
     let c ← if c.group.isSome then enqueue c [o] else pure c
     let c := (onGroup c (do if (← get).ledger.holding then Group.cancelInduction) ()).2
     let c := { c with inducting := none, names := c.names.set (keyOf i.mutatedReadCap) who }
-    return c.notice s!"added ~{(Display.name who).text}: they now read everything said in this group"
+    return c.notice s!"added ~{(Display.name who).text.text}: they now read everything said in this group"
   | .send name text => withChat name fun c => do
     let text := Display.outgoing text
     let some g := c.group | return c.notice "this conversation has not been joined yet"
