@@ -117,10 +117,31 @@ a katzenqt group and the other way round, with the same voucher codes.
 
 ## Using it
 
-The groups are on the left, the selected conversation in the middle, and on the right everyone
-who reads what is written there, with the start of each member's key: a display name is only
-what its owner chose, and two members may choose the same one. The log is below; F2 hides it.
-The line you type into names the group it goes to.
+```
+ ≋ jam  friends  4 members · epoch 12                                    daemon @katzenpost
+╭ groups ────────────╮╭ friends ───────────────────────────────────╮╭ members ─────────────╮
+│friends          3  ││~sam     hey there                          ││me                3f2a│
+│work      joining…  ││       ┊ a second line                      ││~sam              91c0│
+│                    ││me       on my way √√                      ││~kim (!)          77ab│
+│                    ││-- ~sam added ~kim                          ││                      │
+╰────────────────────╯╰────────────────────────────────────────────╯╰──────────────────────╯
+╭ [friends] ─────────────────────────────────────────────────────────────────────────────╮
+│› /inv                                                                                  │
+╰────────────────────────────────────────────────────────────────────────────────────────╯
+ /invite CODE · let in the person whose voucher code you were given  Tab        0 to write
+```
+
+A bar across the top names the group, its members and its epoch. The groups are on the left,
+the selected conversation in the middle, and on the right everyone who reads what is written
+there, with the start of each member's key: a display name is only what its owner chose, and two
+members may choose the same one. The log is below, each line coloured by its level; F2 hides it.
+The line you type into names the group it goes to, and the bar below it shows the keys, or, while
+you type a command, what it does.
+
+Each member's name is drawn in a colour of their own, picked from their key, so it is the same on
+every screen; your own name, `me`, jam's notices, and the frame are drawn in colours no member's
+can be. With no group yet, jam shows how to start one. `NO_COLOR` turns colour off, and a terminal
+of 256 or 16 colours gets the nearest ones.
 
 | Command | |
 |---|---|
@@ -131,6 +152,7 @@ The line you type into names the group it goes to.
 | `/leave GROUP` | stop reading and writing the selected group and delete it here; the others keep it |
 | `/clear` | delete the selected conversation's lines here |
 | `/scan` | look again for messages a member's stream skipped |
+| `/help`, F1 | show every command and key |
 | `/quit`, Esc | quit |
 
 ### Several groups
@@ -150,15 +172,22 @@ selects it.
 
 | Key | |
 |---|---|
-| Tab, Shift-Tab | the next or previous group |
-| PgUp, PgDn | scroll the conversation back and forward |
-| F1 | show or hide the commands |
+| Tab, Shift-Tab | the next or previous group; Tab completes a `/command` you have begun |
+| PgUp, PgDn, the wheel | scroll the conversation back and forward |
+| click | select a group; the wheel over the groups moves through them |
+| Left, Right, Home, End | move in the line you are typing |
+| Ctrl-A, Ctrl-E, Ctrl-W, Ctrl-U | to the start, to the end, delete a word, delete to the start |
+| Up, Down | the lines you sent before |
+| F1 | show or hide every command and key |
 | F2 | hide or show the log |
 | F10 | blank the screen at once, and bring it back |
-| Esc, Ctrl-C | quit |
+| Esc | close the help, drop a paste of several lines, or quit |
+| Ctrl-C | quit |
 
-Your own messages are marked `...` until written, `✓` once written, and `✓✓` once a member
-acknowledges reading them.
+Your own messages are marked `…` until written, `√` once written, and `√√` once a member
+acknowledges reading them. A paste of several lines shows as `≡ 3 lines pasted` until Enter
+sends it or Esc drops it. While you are joining a group, its voucher code stays in a bar at the
+top of its conversation.
 
 A member's message too long for one box is not shown yet, nor are files.
 
@@ -167,21 +196,33 @@ A member's message too long for one box is not shown yet, nor are files.
 jam follows Tessera's [TUI security guidelines](https://github.com/katzenpost/Tessera/blob/main/docs/TUI_SECURITY_GUIDELINES.md): everything
 another member sends is untrusted, and the terminal is an interpreter.
 
-- **One filter.** Every string reaches the screen as `Shown`, Tessera's `Untrusted.Safe`, made by
-  [`Tessera.Untrusted`](https://github.com/katzenpost/Tessera), which every TUI showing text from
-  elsewhere needs. It keeps characters by an allowlist of those whose width the terminal and
-  Tessera agree on, and shows anything else: `␛` and the other Control Pictures for control
+- **One filter, in the types.** Everything drawn is a Tessera `Text`, which cannot hold a control
+  character or an escape sequence. jam's own words are literals checked when it compiles; text
+  from the network is filtered by
+  [`Tessera.Untrusted`](https://github.com/katzenpost/Tessera), and is of a type Tessera keeps out
+  of the places a program keeps for its own words. The filter keeps characters by an allowlist of those whose width the terminal and
+  Tessera agree on (checked against libvterm), and shows anything else: `␛` and the other Control Pictures for control
   characters, `␦` for the rest, so an attempt is visible rather than hidden. Bidi controls,
   invisible characters, private-use glyphs and tag characters are refused; combining accents are
-  capped at four a letter; a message shows at most 20 lines. Tessera itself never writes a
-  character that takes no cell. `Jam.Display` adds jam's rules for names.
+  capped at four a letter; a message shows at most 20 lines. Tessera proves that a terminal reads
+  what it writes as printed characters and its own control sequences, and nothing else.
+  `Jam.Display` adds jam's rules for names.
 - **jam decides who said what.** A member's chosen name is shown after `~`, ours as `me`; a name
-  cannot hold check marks or other marks jam uses, and is cut at 30 characters. Names that look
+  is a Tessera `Ident`, which cannot hold a badge glyph, nor marks jam uses, and is cut at 30
+  characters. Names that look
   alike (case, look-alike Cyrillic and Greek letters, `0`/`o`, `1`/`l`), names like ours and names
   mixing scripts show the start of the member's key. Every row of a message after its first
   begins with a gutter, so a newline or a wrap cannot start a row that passes for another
-  message, and jam's notices are drawn in a style no message has.
-- **Input.** Bracketed paste is on and its markers are removed from what is pasted. A paste into
+  message.
+- **Colours.** A member's name is drawn in a colour jam picks from their key, a Tessera
+  `RemoteStyle`: one of five basic colours, which Tessera proves is never one of the reserved
+  styles. jam's notices, `me`, the frame and the bars are drawn in reserved styles
+  (`Jam.Theme`, each proved so). So no member, whatever they are called or send, is drawn the way
+  jam draws its own words, and that holds in fewer colours too: Tessera keeps a style as reserved
+  as it was when it draws for a terminal of 256 or 16 colours, or none.
+- **Input.** Only a key, a paste or a click read from the terminal can act for you: Tessera
+  marks each with a proof that only its application loop can make. Bracketed paste is on and its
+  markers are removed from what is pasted. A paste into
   an empty line is a message, never a command; a message of several lines is sent on a second
   Enter, after jam says how many lines it is. Control and bidi characters are taken out of what
   you send. An unknown `/command` is refused, not sent.
@@ -194,8 +235,7 @@ another member sends is untrusted, and the terminal is an interpreter.
   terminal's scrollback. SIGTERM, SIGHUP and SIGQUIT restore the terminal before exiting, and F10
   blanks the screen at once.
 
-Not yet: petnames bound to keys, the whole of UTS #39's confusables, and a test that parses the
-bytes sent to the terminal with a VT parser; the tests check every cell drawn instead. East Asian
+Not yet: petnames bound to keys, and the whole of UTS #39's confusables. East Asian
 ambiguous-width characters are taken as one cell, as terminals outside CJK locales draw them.
 
 ## Testing
