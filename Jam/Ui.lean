@@ -251,9 +251,7 @@ def groupRow (u : Ui) (c : Chat) : W :=
   let n := unread u c
   let state := if c.joining.isSome then t!" joining…" else if c.inducting.isSome then t!" adding…"
     else if c.group.isNone then t!" …" else .empty
-  -- As wide as the list: ListView puts a selected row in a box with a fill of its own, which
-  -- would otherwise take half the room.
-  hLimit (groupsWidth - 2) <| vLimit 1 <| hBox [withStyle { bold := true } (str (text c.name)), fill,
+  hBox [withStyle { bold := true } (str (text c.name)), fill,
     withStyle Theme.quiet (str state),
     if n > 0 then withStyle Theme.unread (str (t!" " ++ .ofNat n ++ t!" ")) else .empty]
 
@@ -279,27 +277,24 @@ def members (u : Ui) (c : Chat) : W :=
 def banner : List (Text CS .app) :=
   [t!"     ╦ ╔═╗ ╔╦╗", t!"     ║ ╠═╣ ║║║", t!"   ╚═╝ ╩ ╩ ╩ ╩"]
 
-/-- A table of `n` rows and a header, one row each. -/
-def rows' (n : Nat) (t : W) : W := vLimit (n + 1) t
-
 def welcome : W :=
   center (hLimit 56 (vBox (banner.zipIdx.map (fun (l, i) => withStyle (Theme.banner i) (str l)) ++
     [str t!"",
      withStyle Theme.label (str t!"group chat over the Katzenpost mixnet"),
      str t!"",
-     rows' 3 (table [.fit, .fit] [t!"to", t!"type"]
+     table [.fit, .fit] [t!"to", t!"type"]
        [[t!"start a group of your own", t!"/new NAME"],
         [t!"join someone else's group", t!"/join NAME"],
-        [t!"let someone into yours", t!"/invite CODE"]]),
+        [t!"let someone into yours", t!"/invite CODE"]],
      str t!"",
      withStyle Theme.quiet (str t!"F1 shows every command and key")])))
 
 def helpPanel : W :=
   hLimit 78 (vLimit 24 (panel (t!"help · F1 or Esc closes" : Text CS .app).lift true (vBox [
-    rows' commands.length (table [.fit, .fit, .ratio 1] [t!"command", t!"", t!"does"]
-      (commands.map fun (c, a, d) => [ascii c, ascii a, ascii d])),
+    table [.fit, .fit, .ratio 1] [t!"command", t!"", t!"does"]
+      (commands.map fun (c, a, d) => [ascii c, ascii a, ascii d]),
     str t!"",
-    rows' keys.length (table [.fit, .ratio 1] [t!"key", t!"does"] (keys.map fun (k, d) => [ascii k, ascii d])),
+    table [.fit, .ratio 1] [t!"key", t!"does"] (keys.map fun (k, d) => [ascii k, ascii d]),
     fill])))
 
 def conversation (u : Ui) (c : Chat) : W :=
