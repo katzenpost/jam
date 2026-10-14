@@ -57,6 +57,8 @@ def connect (daemon : String) : IO ThinClient.Client := do
 
 /-- Put the terminal back as it was: for a signal, which ends jam without unwinding. -/
 def restoreTerminal : IO Unit := do
+  try CrosstermFfi.disableMouseCapture catch _ => pure ()
+  try CrosstermFfi.disableFocusChange catch _ => pure ()
   try CrosstermFfi.disableBracketedPaste catch _ => pure ()
   try CrosstermFfi.showCursor catch _ => pure ()
   try CrosstermFfi.leaveAlternateScreen catch _ => pure ()
@@ -126,8 +128,11 @@ where
   onSignals log
   try
     let network := s!"daemon {cfg.daemon}"
-    discard <| Tessera.App.run { draw := Ui.draw, update := Ui.update fun m => discard (inbox.send m) }
-      (Ui.markSeen { state := core.state, network, logs := ← logLines.get }) fun post => do
+    let (w, h) ← CrosstermFfi.size
+    discard <| Tessera.App.run
+      { draw := Ui.draw, update := Ui.update fun m => discard (inbox.send m), mouse := true }
+      (Ui.markSeen { state := core.state, network, logs := ← logLines.get,
+                     screen := (w.toNat, h.toNat) }) fun post => do
         showLogs.set (post ∘ .logs)
         let display ← coalesce (post ∘ .state) stop
         let sh : Shell := { backend, core := ← IO.mkRef core, inbox, log, statePath, display, stop }
