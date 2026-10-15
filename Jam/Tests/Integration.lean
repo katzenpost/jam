@@ -37,7 +37,7 @@ def main (args : List String) : IO UInt32 := do
     alice.shell.post (.induct "g" code)
     unless ← waitFor bob "bob joins" deadline fun s => (s.chat? "g").any (·.group.isSome) do
       return false
-    unless ← waitFor alice "alice adds bob" deadline (heard · "added bob") do return false
+    unless ← waitFor alice "alice adds bob" deadline (fun s => (s.chat? "g").any fun c => c.log.any (·.text.startsWith "added ~bob")) do return false
     bob.shell.post (.send "g" "hello from bob")
     alice.shell.post (.send "g" "hello from alice")
     unless ← waitFor alice "alice reads bob" deadline (heard · "hello from bob") do return false
