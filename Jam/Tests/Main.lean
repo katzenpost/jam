@@ -17,7 +17,8 @@ commands. The core is tested in group_chat_client. -/
 
 namespace Jam.Tests
 
-open CryptWalker.GroupChat.Member
+open CryptWalker.Protocols.GroupComm.Common
+open CryptWalker.Protocols.GroupComm.GroupChatKatzenqt1.Member
 open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 open GroupChatClient.GroupChatKatzenqt1.Tests (Net NetM feed runUntil code? joined noticed chatOf)
 

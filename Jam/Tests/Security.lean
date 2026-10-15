@@ -20,7 +20,8 @@ namespace Jam.Tests.Security
 
 open Jam Jam.Display Jam.Tests
 open Tessera.Untrusted.Ident (mixedScript)
-open CryptWalker.GroupChat.Member
+open CryptWalker.Protocols.GroupComm.Common
+open CryptWalker.Protocols.GroupComm.GroupChatKatzenqt1.Member
 open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 open Tessera
 open Tessera (inRanges)
