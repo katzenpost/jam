@@ -28,9 +28,14 @@ rev = "4bbfd6bb9df6bc9ce0d31252afff86d48683c9f2"
 
 # Declared last so that it is the CryptWalker Lake resolves, ahead of thin_client's older pin.
 [[require]]
+name = "group_chat_client"
+git = "https://github.com/katzenpost/group_chat_client.git"
+rev = "5e3ddb4efa53248631f7c4ecd26c6c0e1bd9b208"
+
+[[require]]
 name = "CryptWalker"
 git = "https://github.com/katzenpost/CryptWalker.git"
-rev = "6e83bc855e46b6b6a6ec2f8916ce48039f51191a"
+rev = "b6606fc06183a72e535949dbb1263fd74be873f6"
 
 [[lean_lib]]
 name = "Jam"
