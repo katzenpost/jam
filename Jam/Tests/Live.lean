@@ -3,8 +3,9 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Jam.Daemon
-import Jam.Shell
+import Jam.Presentation
+import GroupChatClient.GroupChatKatzenqt1.Daemon
+import GroupChatClient.GroupChatKatzenqt1.Shell
 
 /-! # Members on a real mixnet
 
@@ -14,6 +15,7 @@ client daemon, for the tests that need a mixnet. -/
 namespace Jam.Tests.Live
 
 open Jam Logger
+open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 
 def connect (daemon : String) : IO ThinClient.Client := do
   let dial ← if daemon.startsWith "@" || daemon.startsWith "/" then
@@ -38,11 +40,11 @@ def member (daemon : String) (me : String) (dir : System.FilePath) (log : Logger
   let client ← connect daemon
   let backend := Daemon.backend client
   let latest ← IO.mkRef ({ me } : State)
-  let (core, resumed) := resume { me } (← backend.maxPlaintext)
+  let (core, resumed) := resume presentation { me } (← backend.maxPlaintext)
   let shell : Shell :=
     { backend, core := ← IO.mkRef core, inbox := ← Std.CloseableChannel.new,
       log := log.withModule s!"jam/{me}", statePath := dir / s!"{me}.cbor",
-      display := latest.set, stop }
+      display := latest.set, stop, app := "jam" }
   shell.start resumed
   pure { shell, latest }
 

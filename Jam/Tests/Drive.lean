@@ -13,6 +13,7 @@ they came from the user. These run a scripted list of them, and of jam's own eve
 namespace Jam.Tests
 
 open CryptWalker.GroupChat.Member
+open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 open Tessera
 
 /-- What came of driving the UI: its last state, what it sent the core, and whether it quit. -/

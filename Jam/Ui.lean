@@ -4,7 +4,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import Tessera
-import Jam.Core
+import GroupChatClient.Shell
+import GroupChatClient.GroupChatKatzenqt1.Core
 import Jam.Display
 import Jam.Theme
 
@@ -40,6 +41,7 @@ open Jam.Display
 open Tessera.Untrusted (Ident)
 open Tessera.Untrusted.Ident (skeleton mixedScript)
 open CryptWalker.GroupChat.Member
+open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 
 abbrev W := Widget CS .remote
 
@@ -382,6 +384,16 @@ def draw (u : Ui) : W :=
 
 /-! ## Input -/
 
+/-- The members of `c` that `who` names: by display name, or by the start of the key in hex. -/
+def named (c : Chat) (who : String) : List ByteArray :=
+  match c.group with
+  | none => []
+  | some g =>
+    let byName := g.readers.keys.filter fun k => c.names.get? k == some who
+    if byName.isEmpty && who.length ≥ 4 then
+      g.readers.keys.filter fun k => (hex k).startsWith who.toLower
+    else byName
+
 /-- What a line typed asks for: a message for the core, a group to select, a note, and whether
 to quit. -/
 def command (u : Ui) (line : String) : Option Msg × Option String × String × Bool :=
@@ -425,7 +437,11 @@ def command (u : Ui) (line : String) : Option Msg × Option String × String × 
     match chat with
     | some c =>
       if rest.isEmpty then (none, none, "/remove NAME, or the start of their key", false)
-      else (some (.remove c rest), none, "", false)
+      else match (current u).map (named · rest) with
+        | some [k] => (some (.remove c k), none, "", false)
+        | some (_ :: _ :: _) =>
+          (none, none, s!"more than one member is called {rest}: name them by the start of their key", false)
+        | _ => (none, none, s!"no member is called {rest}", false)
     | none => (none, none, "select a group first", false)
   | some "/help" => (none, none, "", false)
   | some w =>

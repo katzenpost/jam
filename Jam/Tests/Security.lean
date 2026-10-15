@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import Jam.Display
-import Jam.LogPane
+import GroupChatClient.LogPane
 import Jam.Tests.Util
 import Jam.Ui
 import Jam.Tests.Drive
@@ -21,6 +21,7 @@ namespace Jam.Tests.Security
 open Jam Jam.Display Jam.Tests
 open Tessera.Untrusted.Ident (mixedScript)
 open CryptWalker.GroupChat.Member
+open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 open Tessera
 open Tessera (inRanges)
 
@@ -183,7 +184,7 @@ def pastes : TestM Unit := do
 def logs : TestM Unit := do
   let buf ← IO.mkRef ({} : IO.FS.Stream.Buffer)
   let lines ← IO.mkRef (#[] : Array String)
-  let s := LogPane.stream (IO.FS.Stream.ofBuffer buf) lines fun _ => pure ()
+  let s := LogPane.stream Display.logLine (IO.FS.Stream.ofBuffer buf) lines fun _ => pure ()
   s.putStr "12:00:00.000 INFO jam: name \x1b]0;owned\x07 \u009b2J\n"
   let written := String.fromUTF8! (← buf.get).data
   check "the log file holds no control character but newlines"

@@ -15,6 +15,7 @@ error.
 Usage: `jam-integration [@katzenpost | PATH | HOST:PORT] [minutes]`. -/
 
 open Jam Jam.Tests.Live Logger
+open GroupChatClient.GroupChatKatzenqt1
 
 def main (args : List String) : IO UInt32 := do
   let daemon := args.headD "@katzenpost"

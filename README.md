@@ -240,6 +240,7 @@ ambiguous-width characters are taken as one cell, as terminals outside CJK local
 
 ## Testing
 
-    make test                # in one process, against a simulated Pigeonhole, and the security tests
+    make test                # in one process: the screen, the keys and commands, and the security tests;
+                             # the core is tested in group_chat_client
     ./test-integration.sh    # two members over the docker mixnet
     .lake/build/bin/jam-integration @katzenpost   # the same against a running kpclientd

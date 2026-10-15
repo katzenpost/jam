@@ -16,6 +16,7 @@ and inducts its owner. As `guest`, jam mints a voucher, prints `VOUCHER=<code>` 
 Usage: `jam-interop host|guest [@katzenpost | PATH | HOST:PORT] [minutes]`. -/
 
 open Jam Jam.Tests.Live Logger
+open GroupChatClient.GroupChatKatzenqt1
 
 def main (args : List String) : IO UInt32 := do
   let some role := args.head? | IO.eprintln "jam-interop host|guest [daemon] [minutes]"; return 2

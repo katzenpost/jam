@@ -3,9 +3,10 @@ SPDX-FileCopyrightText: Copyright (C) 2026 David Stainton
 SPDX-License-Identifier: AGPL-3.0-only
 -/
 
-import Jam.Daemon
-import Jam.LogPane
-import Jam.Shell
+import Jam.Presentation
+import GroupChatClient.LogPane
+import GroupChatClient.GroupChatKatzenqt1.Daemon
+import GroupChatClient.GroupChatKatzenqt1.Shell
 import Jam.Ui
 import Jam.Display
 
@@ -14,7 +15,8 @@ import Jam.Display
 A terminal group chat over the Katzenpost mixnet that speaks katzenqt's group chat. -/
 
 open Jam Logger
-open CryptWalker.GroupChat.Member.Persist
+open GroupChatClient.GroupChatKatzenqt1.Persist
+open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 
 structure Config where
   /-- The daemon's socket: a path, `@name` for an abstract one, or `HOST:PORT` over TCP. -/
@@ -104,11 +106,11 @@ where
   IO.setAccessRights dir { user := { read := true, write := true, execution := true } }
   let logPath := cfg.logFile.getD (dir / "jam.log")
   let logFile ← Logger.Output.open (.file logPath)
-  IO.setAccessRights logPath Shell.private_
+  IO.setAccessRights logPath GroupChatClient.private_
   let logLines ← IO.mkRef (#[] : Array String)
   -- The pane shows the log once the UI is up; until then lines only go to the file.
   let showLogs ← IO.mkRef (fun (_ : Array String) => (pure () : IO Unit))
-  let log ← Logger.new (.stream (LogPane.stream logFile logLines fun ls => do (← showLogs.get) ls))
+  let log ← Logger.new (.stream (LogPane.stream Display.logLine logFile logLines fun ls => do (← showLogs.get) ls))
     (← Level.fromEnv "JAM_LOG" .info) "jam"
   let statePath := dir / "state.cbor"
   let saved : Option State ← if ← statePath.pathExists then
@@ -122,7 +124,7 @@ where
   let client ← connect cfg.daemon
   let backend := Daemon.backend client
   log.notice s!"started as {me}, state in {dir}"
-  let (core, resumed) := resume state (← backend.maxPlaintext)
+  let (core, resumed) := resume presentation state (← backend.maxPlaintext)
   let stop ← IO.mkRef false
   let inbox ← Std.CloseableChannel.new (α := Msg)
   onSignals log
@@ -135,7 +137,7 @@ where
                      screen := (w.toNat, h.toNat) }) fun post => do
         showLogs.set (post ∘ .logs)
         let display ← coalesce (post ∘ .state) stop
-        let sh : Shell := { backend, core := ← IO.mkRef core, inbox, log, statePath, display, stop }
+        let sh : Shell := { backend, core := ← IO.mkRef core, inbox, log, statePath, display, stop, app := "jam" }
         sh.start resumed
   finally
     showLogs.set fun _ => pure ()
