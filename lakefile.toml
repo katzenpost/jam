@@ -18,7 +18,7 @@ rev = "61f4fc02ffa00401d59d98f25feda499f26b10e2"
 [[require]]
 name = "thinclient"
 git = "https://github.com/katzenpost/thin_client.git"
-rev = "5e96c63e95a99db2e9a74e44c09cb8a0b31c5619"
+rev = "bb6d1aa6573d7b67cacda61cf533302974a41497"
 
 # Pinned here to the head of its main, a merge of the commit thin_client pins.
 [[require]]
@@ -30,12 +30,12 @@ rev = "4bbfd6bb9df6bc9ce0d31252afff86d48683c9f2"
 [[require]]
 name = "group_chat_client"
 git = "https://github.com/katzenpost/group_chat_client.git"
-rev = "5e3ddb4efa53248631f7c4ecd26c6c0e1bd9b208"
+rev = "14656d428ba2f6079239f7301cd6fb03289e9795"
 
 [[require]]
 name = "CryptWalker"
 git = "https://github.com/katzenpost/CryptWalker.git"
-rev = "b6606fc06183a72e535949dbb1263fd74be873f6"
+rev = "4831c416b8552e8829f77bfc9e5710fece5379c8"
 
 [[lean_lib]]
 name = "Jam"
