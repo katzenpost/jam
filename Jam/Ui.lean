@@ -40,8 +40,8 @@ open Tessera Widget
 open Jam.Display
 open Tessera.Untrusted (Ident)
 open Tessera.Untrusted.Ident (skeleton mixedScript)
-open CryptWalker.Protocols.GroupComm.Common
-open CryptWalker.Protocols.GroupComm.GroupChatKatzenqt1.Member
+open Cryptlib.Protocols.GroupComm.Common
+open Cryptlib.Protocols.GroupComm.GroupChatKatzenqt1.Member
 open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 
 abbrev W := Widget CS .remote

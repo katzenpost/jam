@@ -4,8 +4,8 @@ A terminal group chat over the [Katzenpost](https://katzenpost.network) mixnet, 
 that speaks [katzenqt](https://github.com/katzenpost/katzenqt)'s group chat: a jam member and a
 katzenqt member can be in one group.
 
-- The group chat protocol is CryptWalker's member state machine
-  (`CryptWalker/GroupChat/Member`), the model katzenqt's traces are replayed through, with its
+- The group chat protocol is Cryptlib's member state machine
+  (`Cryptlib/Protocols/GroupComm/GroupChatKatzenqt1/Member`), the model katzenqt's traces are replayed through, with its
   proofs. jam runs that code: it drives the member as katzenqt's adapter does and does the IO.
 - Boxes are read and written through the client daemon, `kpclientd`, with the Lean
   [thin client](https://github.com/katzenpost/thin_client).
@@ -32,7 +32,7 @@ Then:
     lake build jam
 
 `lake exe cache get` fetches the dependencies, and downloads Mathlib's compiled files (several
-GB, which CryptWalker needs) rather than building them for hours. `lake build jam` then
+GB, which Cryptlib needs) rather than building them for hours. `lake build jam` then
 compiles the rest, Rust included, which takes several minutes the first time and seconds after.
 The program is `.lake/build/bin/jam`. `make test` builds and runs the tests.
 

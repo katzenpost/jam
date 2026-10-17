@@ -12,8 +12,8 @@ they came from the user. These run a scripted list of them, and of jam's own eve
 
 namespace Jam.Tests
 
-open CryptWalker.Protocols.GroupComm.Common
-open CryptWalker.Protocols.GroupComm.GroupChatKatzenqt1.Member
+open Cryptlib.Protocols.GroupComm.Common
+open Cryptlib.Protocols.GroupComm.GroupChatKatzenqt1.Member
 open GroupChatClient GroupChatClient.GroupChatKatzenqt1
 open Tessera
 
