@@ -51,7 +51,7 @@
    "inputRev": "61f4fc02ffa00401d59d98f25feda499f26b10e2",
    "inherited": false,
    "configFile": "lakefile.toml"},
-  {"url": "https://github.com/katzenpost/Tessera.git",
+  {"url": "https://github.com/katzenpost/tessera.git",
    "type": "git",
    "subDir": null,
    "scope": "",
