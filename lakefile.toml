@@ -1,4 +1,8 @@
 name = "jam"
+version = "0.1.0"
+description = "A Lean TUI group chat over the Katzenpost mixnet that speaks katzenqt's group chat"
+keywords = ["chat", "tui", "mixnet", "katzenpost", "privacy"]
+license = "AGPL-3.0-only"
 defaultTargets = ["jam"]
 
 [leanOptions]
