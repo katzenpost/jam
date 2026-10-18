@@ -9,7 +9,7 @@ katzenqt member can be in one group.
   proofs. jam runs that code: it drives the member as katzenqt's adapter does and does the IO.
 - Boxes are read and written through the client daemon, `kpclientd`, with the Lean
   [thin client](https://github.com/katzenpost/thin_client).
-- The screen is drawn with [Tessera](https://github.com/katzenpost/Tessera), and jam logs with
+- The screen is drawn with [Tessera](https://github.com/katzenpost/tessera), and jam logs with
   [Logger](https://github.com/katzenpost/Logger).
 
 ## Building
@@ -193,13 +193,13 @@ A member's message too long for one box is not shown yet, nor are files.
 
 ## Security
 
-jam follows Tessera's [TUI security guidelines](https://github.com/katzenpost/Tessera/blob/main/docs/TUI_SECURITY_GUIDELINES.md): everything
+jam follows Tessera's [TUI security guidelines](https://github.com/katzenpost/tessera/blob/main/docs/TUI_SECURITY_GUIDELINES.md): everything
 another member sends is untrusted, and the terminal is an interpreter.
 
 - **One filter, in the types.** Everything drawn is a Tessera `Text`, which cannot hold a control
   character or an escape sequence. jam's own words are literals checked when it compiles; text
   from the network is filtered by
-  [`Tessera.Untrusted`](https://github.com/katzenpost/Tessera), and is of a type Tessera keeps out
+  [`Tessera.Untrusted`](https://github.com/katzenpost/tessera), and is of a type Tessera keeps out
   of the places a program keeps for its own words. The filter keeps characters by an allowlist of those whose width the terminal and
   Tessera agree on (checked against libvterm), and shows anything else: `␛` and the other Control Pictures for control
   characters, `␦` for the rest, so an attempt is visible rather than hidden. Bidi controls,

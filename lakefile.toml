@@ -7,7 +7,7 @@ relaxedAutoImplicit = false
 
 [[require]]
 name = "Tessera"
-git = "https://github.com/katzenpost/Tessera.git"
+git = "https://github.com/katzenpost/tessera.git"
 rev = "d9e207d4b20a516915bde85757cce32535a33daf"
 
 [[require]]
