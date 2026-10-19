@@ -12,7 +12,7 @@ relaxedAutoImplicit = false
 [[require]]
 name = "Tessera"
 git = "https://github.com/katzenpost/tessera.git"
-rev = "d9e207d4b20a516915bde85757cce32535a33daf"
+rev = "79e7d486c4712622527c315df95540565cb001ac"
 
 [[require]]
 name = "Logger"
