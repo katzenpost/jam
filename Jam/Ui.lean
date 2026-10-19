@@ -489,10 +489,8 @@ def enter (send : Msg → IO Unit) (u : Ui) : IO (Ui × Bool) := do
   pure ({ u with input := (u.input.submit).1, pastedLines := none, pasted := false,
                  confirming := false, want := want.orElse fun _ => u.want, note, scroll := 0 }, quit)
 
-/-- A paste's lines, broken at newlines, as tmux and some terminals paste them as CR or CRLF,
-without the blank lines it starts with or the whitespace it ends with. -/
-def pasteLines (s : String) : String :=
-  ((s.replace "\r\n" "\n").replace "\r" "\n").dropWhile (· == '\n') |>.trimAsciiEnd.toString
+/-- A paste's lines, without the blank lines it starts with or the whitespace it ends with. -/
+def pasteLines (s : String) : String := s.dropWhile (· == '\n') |>.trimAsciiEnd.toString
 
 /-- Where the mouse is: the row of the groups list it is on, or the conversation. -/
 inductive Place
