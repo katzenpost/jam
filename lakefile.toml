@@ -17,7 +17,7 @@ rev = "79e7d486c4712622527c315df95540565cb001ac"
 [[require]]
 name = "Logger"
 git = "https://github.com/katzenpost/Logger.git"
-rev = "61f4fc02ffa00401d59d98f25feda499f26b10e2"
+rev = "f278d2cf58d60b9732dd643807f38f3f635f4f57"
 
 [[require]]
 name = "thinclient"
