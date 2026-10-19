@@ -179,6 +179,12 @@ def pastes : TestM Unit := do
   check "they are on the second" (match d.sent.toList with
     | [.send "g" "one\ntwo\nthree"] => true
     | _ => false)
+  let d ← drive u [paste "one\rtwo\r\nthree", key .enter, key .enter]
+  check "a paste's CR and CRLF break lines" (match d.sent.toList with
+    | [.send "g" "one\ntwo\nthree"] => true
+    | _ => false)
+  let d ← drive u [paste "one\rtwo"]
+  check "and are counted as such" (d.ui.pastedLines == some "one\ntwo")
   let d ← drive u [paste "one\ntwo", key .esc]
   check "Esc drops a paste of several lines, and does not quit" (d.ui.pastedLines.isNone && !d.quit)
 

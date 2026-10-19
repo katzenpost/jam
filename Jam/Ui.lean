@@ -489,6 +489,9 @@ def enter (send : Msg → IO Unit) (u : Ui) : IO (Ui × Bool) := do
   pure ({ u with input := (u.input.submit).1, pastedLines := none, pasted := false,
                  confirming := false, want := want.orElse fun _ => u.want, note, scroll := 0 }, quit)
 
+/-- A paste's line breaks as newlines: tmux and some terminals paste them as CR, or CRLF. -/
+def newlines (s : String) : String := (s.replace "\r\n" "\n").replace "\r" "\n"
+
 /-- Where the mouse is: the row of the groups list it is on, or the conversation. -/
 inductive Place
   | group (row : Nat)
@@ -544,6 +547,7 @@ def update (send : Msg → IO Unit) : Tessera.Msg Event → Ui → IO (Ui × Boo
     | .group _ => pure (nextGroup u false, false)
     | _ => pure ({ u with scroll := u.scroll - 3 }, false)
   | .paste p u', u =>
+    let p := Untrusted.pasted (newlines p.text)
     let first := u.input.length == 0 && u.pastedLines.isNone
     let lines := p.text.trimAscii.toString
     if (lines.splitOn "\n").length > 1 || u.pastedLines.isSome then
