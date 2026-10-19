@@ -185,6 +185,13 @@ def pastes : TestM Unit := do
     | _ => false)
   let d ← drive u [paste "one\rtwo"]
   check "and are counted as such" (d.ui.pastedLines == some "one\ntwo")
+  let d ← drive u [paste "hello\r"]
+  check "a line pasted with its line break is one line, without it"
+    (d.ui.pastedLines.isNone && d.ui.input.text.text == "hello")
+  let d ← drive u [paste "hello\r\n"]
+  check "and with CRLF" (d.ui.pastedLines.isNone && d.ui.input.text.text == "hello")
+  let d ← drive u [paste "\r  def f():\r    return 1\r"]
+  check "a paste keeps its first line's indent" (d.ui.pastedLines == some "  def f():\n    return 1")
   let d ← drive u [paste "one\ntwo", key .esc]
   check "Esc drops a paste of several lines, and does not quit" (d.ui.pastedLines.isNone && !d.quit)
 

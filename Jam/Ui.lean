@@ -489,8 +489,10 @@ def enter (send : Msg → IO Unit) (u : Ui) : IO (Ui × Bool) := do
   pure ({ u with input := (u.input.submit).1, pastedLines := none, pasted := false,
                  confirming := false, want := want.orElse fun _ => u.want, note, scroll := 0 }, quit)
 
-/-- A paste's line breaks as newlines: tmux and some terminals paste them as CR, or CRLF. -/
-def newlines (s : String) : String := (s.replace "\r\n" "\n").replace "\r" "\n"
+/-- A paste's lines, broken at newlines, as tmux and some terminals paste them as CR or CRLF,
+without the blank lines it starts with or the whitespace it ends with. -/
+def pasteLines (s : String) : String :=
+  ((s.replace "\r\n" "\n").replace "\r" "\n").dropWhile (· == '\n') |>.trimAsciiEnd.toString
 
 /-- Where the mouse is: the row of the groups list it is on, or the conversation. -/
 inductive Place
@@ -547,15 +549,14 @@ def update (send : Msg → IO Unit) : Tessera.Msg Event → Ui → IO (Ui × Boo
     | .group _ => pure (nextGroup u false, false)
     | _ => pure ({ u with scroll := u.scroll - 3 }, false)
   | .paste p u', u =>
-    let p := Untrusted.pasted (newlines p.text)
     let first := u.input.length == 0 && u.pastedLines.isNone
-    let lines := p.text.trimAscii.toString
+    let lines := pasteLines p.text
     if (lines.splitOn "\n").length > 1 || u.pastedLines.isSome then
       let before := (u.pastedLines.map (· ++ "\n")).getD u.input.text.text
       pure ({ u with pastedLines := some (before ++ lines), input := { history := u.input.history },
                      pasted := u.pasted || first, confirming := false }, false)
     else
-      let (input, _) := u.input.update (ε := Event) (.paste p u')
+      let (input, _) := u.input.update (ε := Event) (.paste (Untrusted.pasted lines) u')
       pure ({ u with input, pasted := u.pasted || first, confirming := false }, false)
   | m, u =>
     let (input, _) := u.input.update m
