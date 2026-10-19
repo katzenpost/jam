@@ -4,7 +4,7 @@ A terminal group chat over the [Katzenpost](https://katzenpost.network) mixnet, 
 that speaks [katzenqt](https://github.com/katzenpost/katzenqt)'s group chat: a jam member and a
 katzenqt member can be in one group.
 
-![jam: three groups, four members, talking over the namenlos mixnet](docs/screenshot.png)
+![jam: three groups, four members, talking over the namenlos mixnet](docs/screenshot-2.png)
 
 - The group chat protocol is Cryptlib's member state machine
   (`Cryptlib/Protocols/GroupComm/GroupChatKatzenqt1/Member`), the model katzenqt's traces are replayed through, with its
