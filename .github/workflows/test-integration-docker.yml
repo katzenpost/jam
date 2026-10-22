@@ -14,7 +14,7 @@ jobs:
       ELAN_VERSION: 4.2.4
       ELAN_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure podman socket
         run: systemctl --user start podman.socket
       - name: install elan
@@ -24,7 +24,7 @@ jobs:
           tar -xzf elan-x86_64-unknown-linux-gnu.tar.gz
           ./elan-init -y --default-toolchain none --no-modify-path
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: .lake
           key: lean-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}

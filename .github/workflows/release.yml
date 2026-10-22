@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # The same tag built on two runner images, from nothing cached: the release is made only when
+  # both give the same bytes.
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    env:
+      ELAN_VERSION: 4.2.4
+      ELAN_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: install elan
+        run: |
+          curl -fsSLO "https://github.com/leanprover/elan/releases/download/v${ELAN_VERSION}/elan-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${ELAN_SHA256}  elan-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c -
+          tar -xzf elan-x86_64-unknown-linux-gnu.tar.gz
+          ./elan-init -y --default-toolchain none --no-modify-path
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - run: rustup toolchain install 1.99.0 --profile minimal
+      - run: sh scripts/release-build.sh dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.os }}
+          path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v8
+      - name: compare the two builds
+        run: |
+          cat dist-*/SHA256SUMS
+          cmp dist-ubuntu-24.04/SHA256SUMS dist-ubuntu-22.04/SHA256SUMS
+          cd dist-ubuntu-24.04 && sha256sum -c SHA256SUMS
+      - uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist-ubuntu-24.04/jam-*
+      - name: publish
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes dist-ubuntu-24.04/*
