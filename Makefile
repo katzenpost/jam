@@ -3,10 +3,14 @@
 katzenpost_ref?=2405aa1119404b1e27cce0566729141102d769f0
 katzenpost_dir?=.katzenpost
 
-.PHONY: build test test-integration
+.PHONY: build release test test-integration
 
 build:
 	lake exe cache get && lake build jam
+
+# The binary and its SHA256SUMS in dist/, the same bytes on every machine.
+release:
+	sh scripts/release-build.sh dist
 
 # In one process, against a simulated Pigeonhole.
 test:
