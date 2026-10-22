@@ -63,19 +63,29 @@ downloaded binary was built by this repository's release workflow.
 
 ## Running
 
-jam talks to the mixnet through the Katzenpost client daemon, `kpclientd`, which does the
-networking and the cryptography. Build it from [katzenpost](https://github.com/katzenpost/katzenpost)
-with Go, of at least the version its `go.mod` names:
+jam does not reach the mixnet itself. It talks to the Katzenpost client daemon, `kpclientd`,
+which does the networking and the cryptography, so start the daemon first, with a client
+configuration that says which mixnet to join.
+
+Build `kpclientd` from [katzenpost](https://github.com/katzenpost/katzenpost) with Go, of at least
+the version its `go.mod` names:
 
     git clone https://github.com/katzenpost/katzenpost
     cd katzenpost/cmd/kpclientd && go build
 
-and run it with the client configuration of the mixnet you want, for example:
+This repository carries the configuration of the namenlos mixnet, in `config/client.toml`. Run the
+daemon with it and leave it running:
 
-    ./kpclientd -c client.toml
+    ./kpclientd -c /path/to/jam/config/client.toml
 
-Its `[Listen]` section says where jam finds it; `[Listen.Unix] Address = "@katzenpost"` is the
-address jam uses by default. Several jam instances, and katzenqt, can share one daemon.
+It logs to the terminal. Once it has fetched the mixnet's PKI document from the voting authorities
+and connected to one of the gateways the file pins, jam can use it. namenlos's gateways change
+from time to time; if the daemon cannot connect to any of them, pull this repository for the
+latest `config/client.toml`.
+
+The file's `[Listen]` section says where jam finds the daemon: `[Listen.Unix] Address =
+"@katzenpost"`, the address jam uses by default. Several jam instances, glint and katzenqt can
+share one daemon.
 
 Then start jam:
 
