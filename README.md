@@ -84,8 +84,8 @@ from time to time; if the daemon cannot connect to any of them, pull this reposi
 latest `config/client.toml`.
 
 The file's `[Listen]` section says where jam finds the daemon: `[Listen.Unix] Address =
-"@katzenpost"`, the address jam uses by default. Several jam instances, glint and katzenqt can
-share one daemon.
+"@katzenpost"`, the address jam uses by default. Several jam instances and katzenqt
+can share one daemon.
 
 Then start jam:
 
