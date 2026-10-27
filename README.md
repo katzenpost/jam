@@ -67,16 +67,20 @@ jam does not reach the mixnet itself. It talks to the Katzenpost client daemon, 
 which does the networking and the cryptography, so start the daemon first, with a client
 configuration that says which mixnet to join.
 
+This repository carries the configuration of the namenlos mixnet, in `config/client.toml`. It is
+a configuration for `kpclientd`, not for jam, which never reads it.
+
 Build `kpclientd` from [katzenpost](https://github.com/katzenpost/katzenpost) with Go, of at least
-the version its `go.mod` names:
+the version its `go.mod` names, using the top-level Makefile:
 
     git clone https://github.com/katzenpost/katzenpost
-    cd katzenpost/cmd/kpclientd && go build
+    cd katzenpost
+    make kpclientd
 
-This repository carries the configuration of the namenlos mixnet, in `config/client.toml`. Run the
-daemon with it and leave it running:
+This puts the daemon at `cmd/kpclientd/kpclientd`. Run it with the configuration and leave it
+running:
 
-    ./kpclientd -c /path/to/jam/config/client.toml
+    cmd/kpclientd/kpclientd -c /path/to/jam/config/client.toml
 
 It logs to the terminal. Once it has fetched the mixnet's PKI document from the voting authorities
 and connected to one of the gateways the file pins, jam can use it. namenlos's gateways change
