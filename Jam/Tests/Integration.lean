@@ -28,8 +28,8 @@ def main (args : List String) : IO UInt32 := do
   let alice ← member daemon "alice" dir log stop
   let bob ← member daemon "bob" dir log stop
   let ok ← (do
-    alice.shell.post (.create "g")
-    bob.shell.post (.join "g")
+    alice.shell.post (.create "g" none)
+    bob.shell.post (.join "g" none)
     unless ← waitFor alice "alice founds a group" deadline fun s => (s.chat? "g").any (·.group.isSome) do
       return false
     unless ← waitFor bob "bob mints a voucher" deadline (code? · |>.isSome) do return false

@@ -30,8 +30,8 @@ def newNet (names : List String) : IO (IO.Ref Sim.World × Net) := do
 def removeByName : TestM Unit := do
   let (world, net) ← newNet ["alice", "bob"]
   let (ok, net) ← (do
-    feed 0 (.create "g")
-    feed 1 (.join "g")
+    feed 0 (.create "g" none)
+    feed 1 (.join "g" none)
     unless ← runUntil world fun n => (code? n 1 "g").isSome do return false
     let some code := code? (← get) 1 "g" | return false
     feed 0 (.induct "g" code)
@@ -72,7 +72,7 @@ def ui : TestM Unit := do
   check "enter clears the line" (d.ui.input.length == 0 && !d.quit)
   let d ← drive u (line "/new h")
   check "/new creates a group" (match d.sent.toList with
-    | [.create "h"] => true
+    | [.create "h" none] => true
     | _ => false)
   let d ← drive u (line "/new h" ++ [.custom (.state { me := "alice", chats := [chat, { name := "h" }] })])
   check "the new group is selected once it appears" (d.ui.selected == 1)

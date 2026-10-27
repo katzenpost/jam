@@ -1,5 +1,5 @@
 name = "jam"
-version = "0.1.0"
+version = "0.2.0"
 description = "A Lean TUI group chat over the Katzenpost mixnet that speaks katzenqt's group chat"
 keywords = ["chat", "tui", "mixnet", "katzenpost", "privacy"]
 license = "AGPL-3.0-only"
@@ -12,34 +12,34 @@ relaxedAutoImplicit = false
 [[require]]
 name = "Tessera"
 git = "https://github.com/katzenpost/tessera.git"
-rev = "79e7d486c4712622527c315df95540565cb001ac"
+rev = "v0.2.0"
 
 [[require]]
 name = "Logger"
 git = "https://github.com/katzenpost/Logger.git"
-rev = "f278d2cf58d60b9732dd643807f38f3f635f4f57"
+rev = "v0.2.0"
 
 [[require]]
 name = "thinclient"
 git = "https://github.com/katzenpost/thin_client.git"
-rev = "cbc2272c156bbe67cbc6b996677811baff3eb404"
+rev = "985dc6a9188efad36ccdb020547b73fb7d43b23f"
 
 # Pinned here to the head of its main, a merge of the commit thin_client pins.
 [[require]]
 name = "lean_unix_socket"
 git = "https://github.com/katzenpost/lean_unix_socket.git"
-rev = "4bbfd6bb9df6bc9ce0d31252afff86d48683c9f2"
+rev = "v0.1.0"
 
 # Declared last so that it is the Cryptlib Lake resolves, ahead of thin_client's older pin.
 [[require]]
 name = "group_chat_client"
 git = "https://github.com/katzenpost/group_chat_client.git"
-rev = "4a1e73e6a0d04b7dcd43e53b7e4a4a3f4ebd88da"
+rev = "v0.2.0"
 
 [[require]]
 name = "cryptlib"
 git = "https://github.com/katzenpost/cryptlib.git"
-rev = "6f651738d26db5ac18dd5670bf501cfc63723175"
+rev = "v0.2.0"
 
 [[lean_lib]]
 name = "Jam"

@@ -31,7 +31,7 @@ def main (args : List String) : IO UInt32 := do
   let stdout ← IO.getStdout
   let ok ← (do
     if role == "host" then
-      me.shell.post (.create "g")
+      me.shell.post (.create "g" none)
       unless ← waitFor me "jam founds g" deadline fun s => (s.chat? "g").any (·.group.isSome) do
         return false
       stdout.putStrLn "READY"; stdout.flush
@@ -41,7 +41,7 @@ def main (args : List String) : IO UInt32 := do
           (s.chat? "g").any fun c => c.log.any (·.text.startsWith "added ") do
         return false
     else
-      me.shell.post (.join "g")
+      me.shell.post (.join "g" none)
       unless ← waitFor me "jam mints a voucher" deadline (code? · |>.isSome) do return false
       let some code := code? (← me.latest.get) | return false
       stdout.putStrLn s!"VOUCHER={code}"; stdout.flush

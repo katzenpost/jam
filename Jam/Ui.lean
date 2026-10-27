@@ -411,13 +411,13 @@ def command (u : Ui) (line : String) : Option Msg × Option String × String × 
   | some "/new" =>
     if rest.isEmpty then (none, none, "/new NAME starts a group of your own", false)
     else if taken rest then (none, some rest, s!"you already have a group called {rest}", false)
-    else (some (.create rest), some rest, "", false)
+    else (some (.create rest none), some rest, "", false)
   | some "/join" =>
     if rest.isEmpty then
       (none, none, "/join NAME joins someone else's group: NAME is what you will call it here", false)
     else if taken rest then
       (none, some rest, s!"you already have a group called {rest}: /join is for someone else's group, under a name of its own", false)
-    else (some (.join rest), some rest,
+    else (some (.join rest none), some rest,
       "a voucher code will appear: give it to a member of the group, who types /invite CODE", false)
   | some "/invite" =>
     match chat with
