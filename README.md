@@ -101,6 +101,7 @@ Then start jam:
 | `--state DIR` | where jam keeps its state and log; by default `$XDG_DATA_HOME/jam/${JAM_STATE:-default}` |
 | `--name NAME` | your display name, which others see; remembered after the first run |
 | `--log FILE` | the log file, by default `jam.log` in the state directory |
+| `--wire-version 3\|4` | what jam writes and mints: 3, the map forms, or 4 (the default), the compact arrays; it reads both |
 
 `JAM_LOG` sets the log level: `critical`, `error`, `warning`, `notice`, `info` (the default) or
 `debug`.
