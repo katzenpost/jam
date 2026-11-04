@@ -9,6 +9,7 @@ import Jam.Tests.Util
 import Jam.Tests.Security
 import Jam.Ui
 import Jam.Tests.Drive
+import Jam.Args
 
 /-! # jam's tests
 
@@ -121,11 +122,23 @@ def ui : TestM Unit := do
   check "a paste of several lines is shown as such"
     (has ((Ui.draw d.ui).draw 100 30).lines "3 lines pasted")
 
+/-- `--wire-version` reaches the core that `resume` makes. -/
+def wireVersion : TestM Unit := do
+  let wv (args : List String) := (parseArgs {} args).toOption.map (·.wireVersion)
+  check "the wire version is 4 by default" (wv [] == some 4)
+  check "--wire-version 3 picks the map forms" (wv ["--wire-version", "3"] == some 3)
+  check "--wire-version 4 picks the arrays" (wv ["--name", "a", "--wire-version", "4"] == some 4)
+  check "other wire versions are refused" (wv ["--wire-version", "5"] == none && wv ["--wire-version"] == none)
+  let core (v : Nat) := (resume presentation { me := "a" } 1530 (wireVersion := v)).1
+  check "the core writes in the version asked for"
+    ((core 3).wireVersion == 3 && (core 4).wireVersion == 4)
+
 def main : IO UInt32 := do
   let ((), (pass, fail)) ← (do
     Security.tests
     ui
-    removeByName).run (0, 0)
+    removeByName
+    wireVersion).run (0, 0)
   IO.println s!"{pass} passed, {fail} failed"
   return if fail == 0 then 0 else 1
 

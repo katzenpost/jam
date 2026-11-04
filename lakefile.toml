@@ -22,7 +22,7 @@ rev = "v0.2.0"
 [[require]]
 name = "thinclient"
 git = "https://github.com/katzenpost/thin_client.git"
-rev = "985dc6a9188efad36ccdb020547b73fb7d43b23f"
+rev = "98ff985ad348156eccbe7d3f4c4849a47041f2d3"
 
 # Pinned here to the head of its main, a merge of the commit thin_client pins.
 [[require]]
@@ -34,12 +34,12 @@ rev = "v0.1.0"
 [[require]]
 name = "group_chat_client"
 git = "https://github.com/katzenpost/group_chat_client.git"
-rev = "v0.2.0"
+rev = "001196f63f168f5fe82703584d934be682ea8b2f"
 
 [[require]]
 name = "cryptlib"
 git = "https://github.com/katzenpost/cryptlib.git"
-rev = "v0.2.0"
+rev = "6d8c31e81fc187f24c80257f5a96689d3ba0fc5e"
 
 [[lean_lib]]
 name = "Jam"

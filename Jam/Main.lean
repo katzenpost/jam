@@ -9,6 +9,7 @@ import GroupChatClient.GroupChatKatzenqt1.Daemon
 import GroupChatClient.GroupChatKatzenqt1.Shell
 import Jam.Ui
 import Jam.Display
+import Jam.Args
 
 /-! # jam
 
@@ -17,25 +18,6 @@ A terminal group chat over the Katzenpost mixnet that speaks katzenqt's group ch
 open Jam Logger
 open GroupChatClient.GroupChatKatzenqt1.Persist
 open GroupChatClient GroupChatClient.GroupChatKatzenqt1
-
-structure Config where
-  /-- The daemon's socket: a path, `@name` for an abstract one, or `HOST:PORT` over TCP. -/
-  daemon : String := "@katzenpost"
-  stateDir : Option System.FilePath := none
-  logFile : Option System.FilePath := none
-  name : Option String := none
-
-def usage : String :=
-  "usage: jam [--daemon @katzenpost | PATH | HOST:PORT] [--state DIR] [--name NAME] [--log FILE]
-The log level is JAM_LOG: critical, error, warning, notice, info (the default) or debug."
-
-def parseArgs : Config → List String → Except String Config
-  | c, [] => pure c
-  | c, "--daemon" :: d :: rest => parseArgs { c with daemon := d } rest
-  | c, "--state" :: d :: rest => parseArgs { c with stateDir := some d } rest
-  | c, "--log" :: f :: rest => parseArgs { c with logFile := some f } rest
-  | c, "--name" :: n :: rest => parseArgs { c with name := some n } rest
-  | _, a :: _ => throw s!"unknown argument: {a}"
 
 def defaultStateDir : IO System.FilePath := do
   let base ← match ← IO.getEnv "XDG_DATA_HOME" with
@@ -124,7 +106,7 @@ where
   let client ← connect cfg.daemon
   let backend := Daemon.backend client
   log.notice s!"started as {me}, state in {dir}"
-  let (core, resumed) := resume presentation state (← backend.maxPlaintext)
+  let (core, resumed) := resume presentation state (← backend.maxPlaintext) (wireVersion := cfg.wireVersion)
   let stop ← IO.mkRef false
   let inbox ← Std.CloseableChannel.new (α := Msg)
   onSignals log
