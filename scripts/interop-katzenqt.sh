@@ -6,7 +6,7 @@
 #
 # host:  jam founds the group and inducts katzenqt, which mints the voucher.
 # guest: katzenqt founds the group and inducts jam, which mints the voucher.
-# katzenqt must be checked out at a branch that speaks jam's group chat (acks-idx64), with its
+# katzenqt must be checked out at a branch that speaks jam's group chat (main), with its
 # virtualenv in .venv. Its state goes to a fresh directory, never the user's.
 set -euo pipefail
 

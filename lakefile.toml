@@ -1,5 +1,5 @@
 name = "jam"
-version = "0.2.0"
+version = "0.2.1"
 description = "A Lean TUI group chat over the Katzenpost mixnet that speaks katzenqt's group chat"
 keywords = ["chat", "tui", "mixnet", "katzenpost", "privacy"]
 license = "AGPL-3.0-only"
