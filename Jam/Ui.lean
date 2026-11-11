@@ -4,6 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -/
 
 import Tessera
+import Qrcode
 import GroupChatClient.Shell
 import GroupChatClient.GroupChatKatzenqt1.Core
 import Jam.Display
@@ -300,16 +301,39 @@ def helpPanel : W :=
     table [.fit, .ratio 1] [t!"key", t!"does"] (keys.map fun (k, d) => [ascii k, ascii d]),
     fill])))
 
+/-! ## The voucher as a QR code -/
+
+/-- Two modules of the symbol, one over the other. -/
+def halfBlock : Char → Text CS .app
+  | '█' => t!"█" | '▀' => t!"▀" | '▄' => t!"▄" | _ => t!" "
+
+/-- The voucher code as the QR code hushphone, the T-Deck and katzenqt draw: its bytes in byte
+mode at level M, in the smallest version, with a quiet zone of 4 modules, two modules a row. -/
+def voucherQr (code : String) : List (Text CS .app) :=
+  match Qrcode.QrCode.encodeBytes code.toUTF8 .medium { boostEcl := false } with
+  | .ok q => q.toHalfBlocks.map fun r => r.toList.foldl (· ++ halfBlock ·) .empty
+  | .error _ => []
+
+/-- Whether the symbol fits a pane `w` by `h` with the code's two rows below it. -/
+def qrFits (qr : List (Text CS .app)) (w h : Nat) : Bool :=
+  !qr.isEmpty && qr.length + 2 ≤ h && qr.all (·.width ≤ w)
+
 def conversation (u : Ui) (c : Chat) : W :=
   let lines := bottomUp (fun w =>
     let lw := labelWidth u c
     c.log.flatMap fun l => lineRows u c l w lw) u.scroll
   match c.joining with
   | some (.awaiting code ..) =>
-    -- The code to hand a member, where it cannot be missed; it is also in a file to copy.
-    vBox [vLimit 1 (hBox [withStyle Theme.toast (str (lit t!" voucher code " ++ text code ++ lit t!" ")),
-            withStyle Theme.quiet (str (lit t!" also in " ++ text (voucherFile c.name))), fill]),
-          lines]
+    -- The code to hand a member, where it cannot be missed; it is also in a file to copy. Above
+    -- it, where there is room, the same code as a QR code, dark on light whatever the terminal.
+    -- The code has a row of its own, so that a narrow pane does not cut it.
+    let rows := vLimit 2 (vBox [hBox [withStyle Theme.toast (str (lit t!" " ++ text code ++ lit t!" ")), fill],
+      withStyle Theme.quiet (str (lit t!" voucher code, also in " ++ text (voucherFile c.name)))])
+    let qr := voucherQr code
+    sized fun ctx =>
+      if qrFits qr ctx.width ctx.height then
+        vBox [vLimit qr.length (hBox [fill, withStyle Theme.qr (strs qr), fill]), rows, lines]
+      else vBox [rows, lines]
   | _ => lines
 
 def logPane (u : Ui) : W :=
@@ -374,10 +398,12 @@ def draw (u : Ui) : W :=
     if u.help then center helpPanel
     else match current u with
       | none => panel (t!"jam" : Text CS .app).lift true welcome
-      | some c => hBox [
+      | some c => hBox ([
           hLimit groupsWidth (panel (t!"groups" : Text CS .app).lift false (groups u)),
-          panel (text c.name) true (conversation u c),
-          hLimit membersWidth (panel (t!"members" : Text CS .app).lift false (members u c))]
+          panel (text c.name) true (conversation u c)] ++
+          -- no members yet while a voucher waits: its QR code has their room
+          if c.joining matches some (.awaiting ..) then [] else
+          [hLimit membersWidth (panel (t!"members" : Text CS .app).lift false (members u c))])
   let log := if u.showLog then
       [vLimit (logRows + 2) (panel (t!"log · F2 hides" : Text CS .app).lift false (logPane u))]
     else []
