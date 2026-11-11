@@ -51,14 +51,14 @@ yourself, with what Building lists and Rust 1.99.0 (`rustup toolchain install 1.
 
     git clone https://github.com/katzenpost/jam
     cd jam
-    git checkout v0.2.0
+    git checkout v0.2.1
     FROM_SOURCE=1 make release
-    curl -fsSL https://github.com/katzenpost/jam/releases/download/v0.2.0/SHA256SUMS | diff - dist/SHA256SUMS
+    curl -fsSL https://github.com/katzenpost/jam/releases/download/v0.2.1/SHA256SUMS | diff - dist/SHA256SUMS
 
 No output from `diff` means your build and the release match. `FROM_SOURCE=1` skips
 `lake exe cache get` and builds Mathlib too, so nothing you run was compiled by someone else; it
 takes a few hours. Without it, `make release` is quicker and trusts Mathlib's downloaded files.
-Either way, `gh attestation verify jam-v0.2.0-x86_64-linux --repo katzenpost/jam` checks that a
+Either way, `gh attestation verify jam-v0.2.1-x86_64-linux --repo katzenpost/jam` checks that a
 downloaded binary was built by this repository's release workflow.
 
 ## Running
@@ -147,9 +147,10 @@ Give each its own state directory, and they can share one daemon:
 
 ### With katzenqt
 
-jam speaks katzenqt's group chat, as of katzenqt's `acks-idx64` branch: a jam member can join
+jam speaks katzenqt's group chat, as of katzenqt's main branch: a jam member can join
 a katzenqt group and the other way round, with the same voucher codes.
-`scripts/interop-katzenqt.sh` runs both directions with `katzenqt-headless`.
+`scripts/interop-katzenqt.sh` runs both directions with `katzenqt-headless`. A katzenqt older
+than its wire version 4 reads only version 3: give jam `--wire-version 3` to talk to one.
 
 ## Using it
 
