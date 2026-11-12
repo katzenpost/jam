@@ -122,6 +122,34 @@ def ui : TestM Unit := do
   check "a paste of several lines is shown as such"
     (has ((Ui.draw d.ui).draw 100 30).lines "3 lines pasted")
 
+/-- A voucher as a QR code: the modules qrcodegen draws for it (qrcode-lean's vector), and only
+where the pane has room. -/
+def voucherQr : TestM Unit := do
+  let code := "cvV8Q1uGC31DYm4pNGXfCg8ihJA1Pj7sYkyK/eBIP28="
+  let modules := "fe74f93fc10fa5106eaf5c2bb75771f5dbabd20aec17ae7107faaaaafe01f20c00be1de13e7c15c7034dee6920438063c4e1ae9245692a1e7c0e6cf8db14405579cf4ae6d3cc4c3e3d039588708848846c1a777399e5c7e68b2e06db46b23d32420bdc9b474efb805ed6c4ff8fcb6ad05f83d1fbaaa24ff5d4be5846ebc8cbd104dd7a04fed4169100"
+  let nibble (c : Char) := if c.isDigit then c.toNat - '0'.toNat else c.toNat - 'a'.toNat + 10
+  -- version 4: 33 modules a side, row by row, most significant bit first
+  let dark (x y : Nat) : Bool := x ≥ 4 && y ≥ 4 && x < 37 && y < 37 &&
+    let i := (y - 4) * 33 + (x - 4)
+    (nibble (modules.toList[i / 4]!) >>> (3 - i % 4)) % 2 == 1
+  let rows := (Ui.voucherQr code).map (·.text.toList)
+  check "a voucher's QR code is 41 columns by 21 rows" (rows.length == 21 && rows.all (·.length == 41))
+  check "its modules are qrcodegen's" <| (List.range 41).all fun y => (List.range 41).all fun x =>
+    let cell := (rows.getD (y / 2) []).getD x ' '
+    let ink := if y % 2 == 0 then cell == '█' || cell == '▀' else cell == '█' || cell == '▄'
+    ink == dark x y
+  let qr := Ui.voucherQr code
+  check "it fits 41 by 23, with the code below" (Ui.qrFits qr 41 23)
+  check "not narrower or shorter" (!Ui.qrFits qr 40 23 && !Ui.qrFits qr 41 22)
+  let u : Ui.Ui := { showLog := false, state := { me := "alice", chats :=
+    [{ name := "g", joining := some (.awaiting code .empty .empty .empty false) }] } }
+  let has (lines : List String) (s : String) := lines.any fun l => (l.splitOn s).length > 1
+  let big := ((Ui.draw u).draw 80 30).lines
+  check "a voucher waiting is drawn as a QR code, with its code below"
+    (has big "█▀▀▀▀▀█" && has big code)
+  let small := ((Ui.draw u).draw 80 24).lines
+  check "a terminal too small for it shows the code alone" (!has small "█▀▀▀▀▀█" && has small code)
+
 /-- `--wire-version` reaches the core that `resume` makes. -/
 def wireVersion : TestM Unit := do
   let wv (args : List String) := (parseArgs {} args).toOption.map (·.wireVersion)
@@ -138,6 +166,7 @@ def main : IO UInt32 := do
     Security.tests
     ui
     removeByName
+    voucherQr
     wireVersion).run (0, 0)
   IO.println s!"{pass} passed, {fail} failed"
   return if fail == 0 then 0 else 1

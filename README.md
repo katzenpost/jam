@@ -126,8 +126,9 @@ Say Alice starts a group and adds Sam. They hand the voucher code to each other 
 another messenger, a QR code, in person.
 
 1. Alice types `/new friends`.
-2. Sam types `/join friends`. jam mints a voucher and shows its code in the conversation, and
-   writes it to `voucher-friends.txt` in Sam's state directory, so that it can be copied whole.
+2. Sam types `/join friends`. jam mints a voucher and shows its code in the conversation, as a
+   QR code too where the window has room, and writes it to `voucher-friends.txt` in Sam's state
+   directory, so that it can be copied whole.
    Sam sends Alice the code.
 3. Alice selects `friends` (Tab moves between groups) and types `/invite CODE`, pasting the code.
    Whoever holds a code can read everything said in the group from then on, so Alice takes it
@@ -223,8 +224,11 @@ selects it.
 
 Your own messages are marked `…` until written, `√` once written, and `√√` once a member
 acknowledges reading them. A paste of several lines shows as `≡ 3 lines pasted` until Enter
-sends it or Esc drops it. While you are joining a group, its voucher code stays in a bar at the
-top of its conversation.
+sends it or Esc drops it. While you are joining a group, its voucher code stays at the top of its
+conversation, under the same code as a QR code, the one hushphone, the T-Deck and katzenqt draw,
+when the pane has room for it: 41 columns by 23 rows, so from 80 by 30 with the log hidden (F2).
+
+![jam joining a group: the voucher code as a QR code, and as text below it](docs/voucher-qr.png)
 
 A member's message too long for one box is not shown yet, nor are files.
 

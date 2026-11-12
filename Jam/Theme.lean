@@ -47,6 +47,9 @@ def statusKey : Style := { bg := some (.rgb 80 250 123), fg := some .black, bold
 /-- A note jam shows in the status bar. -/
 def toast : Style := { bg := some (.rgb 255 184 108), fg := some .black, bold := true }
 
+/-- A voucher's QR code: dark modules on light, as a camera expects, whatever the terminal's colours. -/
+def qr : Style := { bg := some .brightWhite, fg := some .black }
+
 /-- How many lines of a conversation have not been seen. -/
 def unread : Style := { bg := some (.rgb 255 85 85), fg := some .brightWhite, bold := true }
 
