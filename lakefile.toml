@@ -39,7 +39,7 @@ rev = "001196f63f168f5fe82703584d934be682ea8b2f"
 [[require]]
 name = "cryptlib"
 git = "https://github.com/katzenpost/cryptlib.git"
-rev = "6d8c31e81fc187f24c80257f5a96689d3ba0fc5e"
+rev = "06fb4633c5c4e9ab3d0741ffe1e45ee930e68780"
 
 # The voucher drawn as a QR code, as hushphone, the T-Deck and katzenqt draw it.
 [[require]]
