@@ -22,7 +22,7 @@ rev = "v0.2.0"
 [[require]]
 name = "thinclient"
 git = "https://github.com/katzenpost/thin_client.git"
-rev = "98ff985ad348156eccbe7d3f4c4849a47041f2d3"
+rev = "a973a7033304cb5b901598685ab6bda7509e8fd5"
 
 # Pinned here to the head of its main, a merge of the commit thin_client pins.
 [[require]]
